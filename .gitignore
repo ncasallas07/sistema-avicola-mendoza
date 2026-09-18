@@ -1,0 +1,21 @@
+node_modules/
+
+# Variables de entorno (nunca versionar valores reales)
+.env
+.env.*
+!.env.example
+
+# Build / artefactos
+dist/
+build/
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

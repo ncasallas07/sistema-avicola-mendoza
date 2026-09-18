@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+body {
+  @apply bg-slate-50 text-slate-800;
+}
+
+/* El comprobante (ComprobantePreview) usa print:hidden en su barra de
+   acciones; esto asegura que el documento impreso quede limpio en A4 sin
+   fondos grises ni sombras del contenedor de pantalla. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+  }
+}
