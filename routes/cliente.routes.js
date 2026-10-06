@@ -8,18 +8,17 @@ const {
   editarClienteSchema,
   cambiarEstadoSchema
 } = require('../validators/cliente.validator');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
 router.use(verificarToken);
 
-router.get('/', verificarRol('Admin', 'Vendedor'), clienteController.listar);
-router.get('/:id', verificarRol('Admin', 'Vendedor'), clienteController.obtener);
-router.post('/', verificarRol('Admin', 'Vendedor'), validate(crearClienteSchema), clienteController.crear);
-router.put('/:id', verificarRol('Admin', 'Vendedor'), validate(editarClienteSchema), clienteController.editar);
-// Activar/desactivar un cliente es una acción administrativa sensible.
+router.get('/', autorizar('clientes.ver'), clienteController.listar);
+router.get('/:id', autorizar('clientes.ver'), clienteController.obtener);
+router.post('/', autorizar('clientes.crear'), validate(crearClienteSchema), clienteController.crear);
+router.put('/:id', autorizar('clientes.editar'), validate(editarClienteSchema), clienteController.editar);
 router.patch(
   '/:id/estado',
-  verificarRol('Admin'),
+  autorizar('clientes.eliminar'),
   validate(cambiarEstadoSchema),
   clienteController.cambiarEstado
 );

@@ -8,18 +8,17 @@ const {
   editarProductoSchema,
   cambiarEstadoSchema
 } = require('../validators/producto.validator');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
 router.use(verificarToken);
 
-router.get('/', verificarRol('Admin', 'Vendedor'), productoController.listar);
-router.get('/:id', verificarRol('Admin', 'Vendedor'), productoController.obtener);
-// Crear, editar y activar/desactivar productos es exclusivo del Administrador.
-router.post('/', verificarRol('Admin'), validate(crearProductoSchema), productoController.crear);
-router.put('/:id', verificarRol('Admin'), validate(editarProductoSchema), productoController.editar);
+router.get('/', autorizar('productos.ver'), productoController.listar);
+router.get('/:id', autorizar('productos.ver'), productoController.obtener);
+router.post('/', autorizar('productos.crear'), validate(crearProductoSchema), productoController.crear);
+router.put('/:id', autorizar('productos.editar'), validate(editarProductoSchema), productoController.editar);
 router.patch(
   '/:id/estado',
-  verificarRol('Admin'),
+  autorizar('productos.eliminar'),
   validate(cambiarEstadoSchema),
   productoController.cambiarEstado
 );

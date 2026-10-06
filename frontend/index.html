@@ -5,7 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#047857" />
+    <meta name="color-scheme" content="light dark" />
     <title>AVÍCOLA MENDOZA</title>
+    <script>
+      // Aplica el tema guardado ANTES del primer render para evitar el
+      // "flash" de modo claro seguido de un cambio a oscuro. Debe ser un
+      // script síncrono (sin type="module"/defer) para correr antes del paint.
+      (function () {
+        try {
+          var tema = localStorage.getItem('avicola-mendoza-tema');
+          if (tema === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          // localStorage no disponible (modo privado, etc.): se queda en claro.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

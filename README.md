@@ -1,6 +1,6 @@
 # Sistema Web Integral para la Gestión Comercial de una Distribuidora Avícola
 
-Plataforma web para AVÍCOLA MENDOZA que centraliza la gestión de clientes, proveedores, productos, inventario, pedidos, reportes y comprobantes comerciales, con control de acceso por roles (Administrador y Vendedor).
+Plataforma web para AVÍCOLA MENDOZA que centraliza la gestión de clientes, proveedores, productos, inventario, pedidos, reportes y comprobantes comerciales, con roles y permisos dinámicos (los perfiles Administrador y Vendedor vienen precargados, pero un administrador puede crear roles nuevos y asignarles permisos sin tocar código) y tema claro/oscuro.
 
 ## Tecnologías
 
@@ -83,7 +83,20 @@ Backend:
 cp .env.example .env
 ```
 
-Variables requeridas: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`, `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`.
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `DB_HOST` | Sí | Host de MySQL |
+| `DB_PORT` | Sí | Puerto de MySQL (3306 por defecto) |
+| `DB_USER` | Sí | Usuario de MySQL |
+| `DB_PASSWORD` | Sí | Contraseña de MySQL |
+| `DB_NAME` | Sí | Nombre de la base de datos |
+| `DB_NAME_TEST` | No | Base usada por `npm test` (por defecto `<DB_NAME>_test`) |
+| `DB_SSL` | No | `true` solo si el proveedor de MySQL exige TLS (ver [Despliegue](#despliegue)) |
+| `PORT` | Sí | Puerto en el que escucha Express |
+| `JWT_SECRET` | Sí | Secreto para firmar los JWT — **debe ser distinto y aleatorio en producción** |
+| `JWT_EXPIRES_IN` | Sí | Vigencia del token (p. ej. `8h`) |
+| `NODE_ENV` | Sí | `development` \| `test` \| `production` |
+| `FRONTEND_URL` | Solo en producción | URL pública del frontend (Vercel), para CORS. Admite varias separadas por coma |
 
 Frontend:
 
@@ -92,7 +105,9 @@ cd frontend
 cp .env.example .env
 ```
 
-Variable requerida: `VITE_API_URL` (URL base de la API, por defecto `http://localhost:3000/api`).
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `VITE_API_URL` | Sí | URL base de la API. En local: `http://localhost:3000/api`. En Vercel: la URL pública del backend en Railway + `/api` |
 
 ## Ejecución
 
@@ -143,10 +158,20 @@ npm run db:migrate:test
 
 El frontend se verificó funcionalmente y en distintos tamaños de pantalla mediante Playwright durante el desarrollo; no cuenta con una suite automatizada persistida en el repositorio.
 
-## Roles
+## Roles y permisos
 
-- **Administrador**: acceso completo (usuarios, proveedores, productos, inventario, pedidos, reportes).
-- **Vendedor**: gestiona clientes y pedidos propios, consulta productos e inventario; no accede a usuarios, proveedores ni reportes.
+El sistema de autorización es dinámico: `usuarios → rol_id → roles ↔ rol_permisos ↔ permisos`. Un administrador gestiona todo esto desde **Roles y permisos** en la interfaz (crear/editar/activar-desactivar roles, asignarles permisos, asignar un rol a cada usuario) sin modificar código. El backend es siempre la autoridad real: cada ruta exige un código de permiso concreto vía el middleware `autorizar(codigo)`, verificado contra la base de datos en cada petición (no contra el JWT), de forma que retirarle un permiso a un rol afecta de inmediato a los usuarios que lo tengan.
+
+Los dos roles precargados por el seeder son:
+
+- **Administrador**: todos los permisos del sistema (usuarios, roles, proveedores, productos, inventario, pedidos, reportes).
+- **Vendedor**: gestiona clientes y pedidos propios, consulta productos e inventario; no accede a usuarios, roles, proveedores ni reportes.
+
+El sistema protege además al último administrador: no es posible desactivar, eliminar o quitarle los permisos de administración al único rol/usuario capaz de gestionar roles y usuarios.
+
+## Tema claro/oscuro
+
+La interfaz soporta modo claro y oscuro (`ThemeContext` + clase `.dark` de Tailwind), con un control visible en la barra superior y en el login. La preferencia se guarda en `localStorage` (clave `avicola-mendoza-tema`) y se aplica antes del primer render para evitar el parpadeo de tema al cargar la página.
 
 ## Seguridad
 
@@ -156,8 +181,41 @@ Mecanismos implementados en el backend:
 - **bcrypt/bcryptjs** para el hash de contraseñas — nunca se almacenan en texto plano.
 - **Joi** para validar los datos de entrada en todos los endpoints de escritura.
 - **Helmet** para cabeceras HTTP de seguridad.
-- **Rate limiting** (`express-rate-limit`) en el endpoint de login, para mitigar intentos de fuerza bruta.
-- **Roles y permisos** verificados en el backend (middlewares de autenticación/autorización), no únicamente ocultos en la interfaz.
-- **CORS** habilitado a nivel de aplicación.
+- **Rate limiting** (`express-rate-limit`) en el endpoint de login, para mitigar intentos de fuerza bruta. En producción (`NODE_ENV=production`) se habilita `trust proxy` con un único salto (el proxy de Railway), para que el límite se aplique por IP real del cliente y no quede expuesto a spoofing vía `X-Forwarded-For`.
+- **Roles y permisos** verificados en el backend en cada petición (middleware `autorizar(codigo)`), no únicamente ocultos en la interfaz.
+- **CORS restringido por entorno**: en desarrollo siempre se permite `http://localhost:5173`; en producción se agrega además el dominio del frontend configurado en `FRONTEND_URL`. Nunca se usa `origin: '*'`.
 
-CORS está configurado actualmente de forma abierta, apropiada para el entorno de desarrollo. Antes de un despliegue público debe restringirse al dominio real del frontend.
+## Despliegue
+
+Arquitectura de publicación prevista:
+
+```text
+Frontend → Vercel (React + Vite)
+Backend  → Railway (Node.js + Express, servidor tradicional vía "npm start")
+Database → MySQL administrado en Railway
+```
+
+### Frontend (Vercel)
+
+1. Conectar el repositorio de GitHub en Vercel, con **Root Directory = `frontend`**.
+2. Build command: `npm run build` · Output directory: `dist` (detectado automáticamente para un proyecto Vite).
+3. Configurar la variable de entorno `VITE_API_URL` en Vercel con la URL pública del backend en Railway (p. ej. `https://tu-backend.up.railway.app/api`).
+4. `frontend/vercel.json` ya incluye el *rewrite* necesario para que rutas como `/pedidos/5` o `/roles` no devuelvan 404 al recargar directamente (fallback de SPA a `index.html`).
+
+### Backend (Railway)
+
+1. Conectar el repositorio; Railway detecta el proyecto Node automáticamente y ejecuta `npm start` (no requiere adaptarlo a funciones serverless).
+2. Configurar las variables de entorno del backend (ver tabla en [Variables de entorno](#variables-de-entorno)), incluyendo `NODE_ENV=production` y `FRONTEND_URL` con la URL real de Vercel.
+3. El `JWT_SECRET` de producción debe generarse nuevo (largo y aleatorio) y nunca reutilizar el de desarrollo.
+
+### Base de datos (MySQL en Railway)
+
+1. Aprovisionar un plugin de MySQL en Railway y tomar sus credenciales (host, puerto, usuario, contraseña, nombre de base) para las variables `DB_*` del backend.
+2. Si el proveedor exige TLS en la conexión, poner `DB_SSL=true`.
+3. Aplicar una sola vez, contra esa base (vía la consola/shell de Railway o una ejecución puntual con las variables de producción):
+   ```bash
+   npm run db:migrate
+   npm run db:seed
+   ```
+
+> Este repositorio no incluye URLs ni credenciales de un despliegue real: deben configurarse en Vercel/Railway por quien tenga acceso a esas cuentas.

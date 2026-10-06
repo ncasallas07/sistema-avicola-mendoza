@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const reporteController = require('../controllers/reporte.controller');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
-router.use(verificarToken, verificarRol('Admin'));
+// Todas las rutas de reportes requieren reportes.ver; si además se pide
+// ?formato=csv, reporte.controller exige adicionalmente reportes.exportar.
+router.use(verificarToken, autorizar('reportes.ver'));
 
 router.get('/ventas', reporteController.ventasPorPeriodo);
 router.get('/pedidos', reporteController.pedidosPorPeriodo);

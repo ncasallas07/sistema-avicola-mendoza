@@ -10,7 +10,7 @@ import Badge from '../../components/Badge';
 import Button from '../../components/Button';
 
 const Inventario = () => {
-  const { esAdmin } = useAuth();
+  const { tienePermiso } = useAuth();
   const toast = useToast();
   const [existencias, setExistencias] = useState([]);
   const [productos, setProductos] = useState([]);
@@ -73,18 +73,18 @@ const Inventario = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Inventario</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Inventario</h1>
         <div className="flex gap-2">
           <Link to="/inventario/movimientos">
             <Button variant="secondary" icon={History}>Ver movimientos</Button>
           </Link>
-          {esAdmin && (
+          {tienePermiso('inventario.registrar_movimiento') && (
             <>
               <Button icon={ArrowDownCircle} onClick={() => abrirFormulario('entrada')}>Entrada</Button>
               <Button
                 variant="secondary"
                 icon={ArrowUpCircle}
-                className="!border-amber-300 !text-amber-700 hover:!bg-amber-50"
+                className="!border-amber-300 !text-amber-700 hover:!bg-amber-50 dark:!border-amber-700 dark:!text-amber-400 dark:hover:!bg-amber-900/30"
                 onClick={() => abrirFormulario('salida')}
               >
                 Salida
@@ -94,7 +94,7 @@ const Inventario = () => {
         </div>
       </div>
 
-      <div className="flex gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div className="flex gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         {FILTROS.map(({ valor, etiqueta }) => (
           <button
             key={valor || 'todos'}
@@ -103,7 +103,9 @@ const Inventario = () => {
               cargar(valor);
             }}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              filtro === valor ? 'bg-emerald-700 text-white' : 'text-slate-600 hover:bg-slate-100'
+              filtro === valor
+                ? 'bg-emerald-700 text-white'
+                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             {etiqueta}
@@ -112,14 +114,14 @@ const Inventario = () => {
       </div>
 
       {mostrarForm && (
-        <form onSubmit={registrarMovimiento} className="flex flex-wrap items-end gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <form onSubmit={registrarMovimiento} className="flex flex-wrap items-end gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Producto</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Producto</label>
             <select
               required
               value={movimiento.producto_id}
               onChange={(e) => setMovimiento({ ...movimiento, producto_id: e.target.value })}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value="">Selecciona...</option>
               {productos.map((p) => (
@@ -128,22 +130,22 @@ const Inventario = () => {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Cantidad</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Cantidad</label>
             <input
               type="number"
               min="1"
               required
               value={movimiento.cantidad}
               onChange={(e) => setMovimiento({ ...movimiento, cantidad: e.target.value })}
-              className="w-28 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="w-28 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Motivo</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Motivo</label>
             <select
               value={movimiento.motivo}
               onChange={(e) => setMovimiento({ ...movimiento, motivo: e.target.value })}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value="Compra">Compra</option>
               <option value="Ajuste">Ajuste</option>
@@ -159,9 +161,9 @@ const Inventario = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Disponible</th>
@@ -169,19 +171,19 @@ const Inventario = () => {
                 <th className="px-4 py-3">Estado</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {existencias.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-700">{p.nombre}</td>
-                  <td className="px-4 py-3">{p.cantidad_disponible}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.stock_minimo}</td>
+                <tr key={p.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{p.nombre}</td>
+                  <td className="px-4 py-3 dark:text-slate-200">{p.cantidad_disponible}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.stock_minimo}</td>
                   <td className="px-4 py-3"><Badge valor={p.indicador} /></td>
                 </tr>
               ))}
               {existencias.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-12">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                       <Boxes size={28} />
                       <p className="text-sm">No hay productos que coincidan.</p>
                     </div>

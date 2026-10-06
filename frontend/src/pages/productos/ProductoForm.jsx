@@ -82,20 +82,20 @@ const ProductoForm = () => {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="mb-4 text-xl font-bold text-slate-800">{esEdicion ? 'Editar producto' : 'Nuevo producto'}</h1>
-      <form onSubmit={guardar} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <h1 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">{esEdicion ? 'Editar producto' : 'Nuevo producto'}</h1>
+      <form onSubmit={guardar} className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <Campo label="Nombre" required value={form.nombre} onChange={cambiar('nombre')} />
         <Campo label="Descripción" value={form.descripcion} onChange={cambiar('descripcion')} />
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-600">
-            Categoría <span className="text-red-500">*</span>
+          <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+            Categoría <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <select
             required
             value={form.categoria_id}
             onChange={cambiar('categoria_id')}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           >
             <option value="">Selecciona una categoría</option>
             {categorias.map((c) => (
@@ -125,7 +125,7 @@ const ProductoForm = () => {
           />
         )}
         {esEdicion && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             El stock actual se ajusta desde el módulo de Inventario (entradas/salidas), no aquí.
           </p>
         )}
@@ -145,13 +145,13 @@ const ProductoForm = () => {
 
 const Campo = ({ label, required, ...props }) => (
   <div>
-    <label className="mb-1 block text-sm font-medium text-slate-600">
-      {label} {required && <span className="text-red-500">*</span>}
+    <label className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">
+      {label} {required && <span className="text-red-500 dark:text-red-400">*</span>}
     </label>
     <input
       {...props}
       required={required}
-      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500"
     />
   </div>
 );

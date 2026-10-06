@@ -11,7 +11,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import { useConfirm } from '../../hooks/useConfirm';
 
 const ClientesList = () => {
-  const { esAdmin } = useAuth();
+  const { tienePermiso } = useAuth();
   const toast = useToast();
   const { confirmar, dialogProps } = useConfirm();
   const [clientes, setClientes] = useState([]);
@@ -67,35 +67,35 @@ const ClientesList = () => {
       <ConfirmDialog {...dialogProps} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Clientes</h1>
         <Link to="/clientes/nuevo">
           <Button icon={Plus}>Nuevo cliente</Button>
         </Link>
       </div>
 
-      <form onSubmit={buscar} className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <form onSubmit={buscar} className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <input
           placeholder="Buscar por nombre"
           value={filtros.nombre}
           onChange={(e) => setFiltros({ ...filtros, nombre: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         />
         <input
           placeholder="Documento"
           value={filtros.documento}
           onChange={(e) => setFiltros({ ...filtros, documento: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         />
         <input
           placeholder="Zona"
           value={filtros.zona}
           onChange={(e) => setFiltros({ ...filtros, zona: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         />
         <select
           value={filtros.estado}
           onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">Todos los estados</option>
           <option value="activo">Activo</option>
@@ -107,9 +107,9 @@ const ClientesList = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Nombre / Razón social</th>
                 <th className="px-4 py-3">Documento</th>
@@ -118,29 +118,29 @@ const ClientesList = () => {
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {clientes.map((c) => (
-                <tr key={c.id} className="transition-colors hover:bg-slate-50">
+                <tr key={c.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
                   <td className="px-4 py-3">
-                    <Link to={`/clientes/${c.id}`} className="font-medium text-emerald-700 hover:underline">
+                    <Link to={`/clientes/${c.id}`} className="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
                       {c.nombre_razon_social}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{c.documento}</td>
-                  <td className="px-4 py-3 text-slate-600">{c.zona || '—'}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.documento}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.zona || '—'}</td>
                   <td className="px-4 py-3"><Badge valor={c.estado} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-3">
                       <Link
                         to={`/clientes/${c.id}/editar`}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
                         <Pencil size={14} /> Editar
                       </Link>
-                      {esAdmin && (
+                      {tienePermiso('clientes.eliminar') && (
                         <button
                           onClick={() => toggleEstado(c)}
-                          className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600"
+                          className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
                         >
                           {c.estado === 'activo' ? <UserX size={14} /> : <UserCheck size={14} />}
                           {c.estado === 'activo' ? 'Desactivar' : 'Activar'}
@@ -153,7 +153,7 @@ const ClientesList = () => {
               {clientes.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-12">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                       <Users2 size={28} />
                       <p className="text-sm">No se encontraron clientes.</p>
                     </div>

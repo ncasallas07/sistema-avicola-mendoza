@@ -17,14 +17,14 @@ const EstadoBarChart = ({ datos }) => {
         const porcentaje = Math.round((valor / maximo) * 100);
         return (
           <div key={g.clave} className="flex items-center gap-3">
-            <span className="w-24 shrink-0 text-xs font-medium text-slate-500">{g.etiqueta}</span>
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+            <span className="w-24 shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">{g.etiqueta}</span>
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
               <div
                 className={`h-full rounded-full ${g.color} transition-all duration-500`}
                 style={{ width: `${porcentaje}%` }}
               />
             </div>
-            <span className="w-6 shrink-0 text-right text-sm font-semibold text-slate-700">{valor}</span>
+            <span className="w-6 shrink-0 text-right text-sm font-semibold text-slate-700 dark:text-slate-200">{valor}</span>
           </div>
         );
       })}

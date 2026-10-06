@@ -38,8 +38,8 @@ const PedidosList = () => {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Pedidos</h1>
-          {!esAdmin && <p className="text-sm text-slate-500">Solo se muestran los pedidos que tú registraste</p>}
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Pedidos</h1>
+          {!esAdmin && <p className="text-sm text-slate-500 dark:text-slate-400">Solo se muestran los pedidos que tú registraste</p>}
         </div>
         <Link to="/pedidos/nuevo">
           <Button icon={Plus}>Nuevo pedido</Button>
@@ -51,14 +51,14 @@ const PedidosList = () => {
           e.preventDefault();
           cargar(filtros);
         }}
-        className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+        className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800"
       >
         <div>
-          <label className="block text-xs font-medium text-slate-400">Estado</label>
+          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500">Estado</label>
           <select
             value={filtros.estado}
             onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-            className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
           >
             <option value="">Todos</option>
             {ESTADOS.map((e) => (
@@ -67,12 +67,12 @@ const PedidosList = () => {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400">Desde</label>
-          <input type="date" value={filtros.desde} onChange={(e) => setFiltros({ ...filtros, desde: e.target.value })} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500">Desde</label>
+          <input type="date" value={filtros.desde} onChange={(e) => setFiltros({ ...filtros, desde: e.target.value })} className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-400">Hasta</label>
-          <input type="date" value={filtros.hasta} onChange={(e) => setFiltros({ ...filtros, hasta: e.target.value })} className="rounded-md border border-slate-300 px-2 py-1.5 text-sm" />
+          <label className="block text-xs font-medium text-slate-400 dark:text-slate-500">Hasta</label>
+          <input type="date" value={filtros.hasta} onChange={(e) => setFiltros({ ...filtros, hasta: e.target.value })} className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100" />
         </div>
         <Button type="submit" variant="secondary" size="sm">Filtrar</Button>
         {(filtros.estado || filtros.desde || filtros.hasta) && (
@@ -94,9 +94,9 @@ const PedidosList = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">N° Pedido</th>
                 <th className="px-4 py-3">Cliente</th>
@@ -107,26 +107,26 @@ const PedidosList = () => {
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {pedidos.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-700">{p.numero_pedido}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.cliente?.nombre_razon_social}</td>
-                  {esAdmin && <td className="px-4 py-3 text-slate-600">{p.creadoPor?.nombre}</td>}
-                  <td className="px-4 py-3 text-slate-600">{new Date(p.fecha_creacion).toLocaleDateString('es-CO')}</td>
-                  <td className="px-4 py-3 font-medium text-slate-700">${Number(p.total).toLocaleString('es-CO')}</td>
+                <tr key={p.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{p.numero_pedido}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.cliente?.nombre_razon_social}</td>
+                  {esAdmin && <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.creadoPor?.nombre}</td>}
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{new Date(p.fecha_creacion).toLocaleDateString('es-CO')}</td>
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">${Number(p.total).toLocaleString('es-CO')}</td>
                   <td className="px-4 py-3"><Badge valor={p.estado} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-3">
                       <Link
                         to={`/pedidos/${p.id}`}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
                         <Eye size={14} /> Ver
                       </Link>
                       <Link
                         to={`/pedidos/${p.id}/comprobante`}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
                         <FileText size={14} /> Comprobante
                       </Link>
@@ -137,7 +137,7 @@ const PedidosList = () => {
               {pedidos.length === 0 && (
                 <tr>
                   <td colSpan={esAdmin ? 7 : 6} className="px-4 py-12">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                       <ClipboardX size={28} />
                       <p className="text-sm">No hay pedidos que coincidan con el filtro.</p>
                     </div>

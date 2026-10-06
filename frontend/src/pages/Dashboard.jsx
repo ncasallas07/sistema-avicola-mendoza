@@ -51,12 +51,12 @@ const Dashboard = () => {
   if (cargando) return <Spinner texto="Cargando dashboard..." />;
   if (!datos) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-          <AlertTriangle size={22} className="text-red-500" />
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/40">
+          <AlertTriangle size={22} className="text-red-500 dark:text-red-400" />
         </div>
-        <h2 className="font-semibold text-slate-800">No se pudo cargar el dashboard</h2>
-        <p className="max-w-xs text-sm text-slate-500">
+        <h2 className="font-semibold text-slate-800 dark:text-slate-100">No se pudo cargar el dashboard</h2>
+        <p className="max-w-xs text-sm text-slate-500 dark:text-slate-400">
           Ocurrió un problema al cargar la información. Intenta nuevamente.
         </p>
         <Button size="sm" onClick={cargar}>Reintentar</Button>
@@ -68,32 +68,32 @@ const Dashboard = () => {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Hola, {usuario?.nombre.split(' ')[0]}</h1>
-          <p className="text-sm text-slate-500">Resumen de {esAdmin ? 'AVÍCOLA MENDOZA' : 'tus pedidos'}</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Hola, {usuario?.nombre.split(' ')[0]}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Resumen de {esAdmin ? 'AVÍCOLA MENDOZA' : 'tus pedidos'}</p>
         </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             cargar();
           }}
-          className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm"
+          className="flex flex-wrap items-end gap-2 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm dark:border-slate-700 dark:bg-slate-800"
         >
           <div>
-            <label className="block text-[11px] font-medium text-slate-400">Desde</label>
+            <label className="block text-[11px] font-medium text-slate-400 dark:text-slate-500">Desde</label>
             <input
               type="date"
               value={desde}
               onChange={(e) => setDesde(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <div>
-            <label className="block text-[11px] font-medium text-slate-400">Hasta</label>
+            <label className="block text-[11px] font-medium text-slate-400 dark:text-slate-500">Hasta</label>
             <input
               type="date"
               value={hasta}
               onChange={(e) => setHasta(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
             />
           </div>
           <Button type="submit" size="sm">Filtrar</Button>
@@ -114,21 +114,21 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-              <h2 className="mb-4 font-semibold text-slate-700">Pedidos por estado</h2>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-700 dark:bg-slate-800">
+              <h2 className="mb-4 font-semibold text-slate-700 dark:text-slate-200">Pedidos por estado</h2>
               <EstadoBarChart datos={datos.pedidos_por_estado} />
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-3">
-              <h2 className="mb-3 font-semibold text-slate-700">Productos más vendidos</h2>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-3 dark:border-slate-700 dark:bg-slate-800">
+              <h2 className="mb-3 font-semibold text-slate-700 dark:text-slate-200">Productos más vendidos</h2>
               {datos.productos_mas_vendidos.length === 0 ? (
-                <p className="text-sm text-slate-400">Sin ventas registradas todavía.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Sin ventas registradas todavía.</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-slate-100 dark:divide-slate-700">
                   {datos.productos_mas_vendidos.map((p, i) => (
                     <li key={i} className="flex items-center justify-between py-2.5 text-sm">
-                      <span className="text-slate-600">{p.producto}</span>
-                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-medium text-emerald-700">
+                      <span className="text-slate-600 dark:text-slate-300">{p.producto}</span>
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                         {p.cantidad_vendida} unidades
                       </span>
                     </li>
@@ -148,23 +148,23 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-              <h2 className="mb-4 font-semibold text-slate-700">Mis pedidos por estado</h2>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-slate-700 dark:bg-slate-800">
+              <h2 className="mb-4 font-semibold text-slate-700 dark:text-slate-200">Mis pedidos por estado</h2>
               <EstadoBarChart datos={datos.pedidos_por_estado} />
-              <p className="mt-4 text-sm text-slate-500">
-                Vendido en el período: <span className="font-semibold text-slate-800">{formatoMoneda(datos.total_vendido_periodo)}</span>
+              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                Vendido en el período: <span className="font-semibold text-slate-800 dark:text-slate-100">{formatoMoneda(datos.total_vendido_periodo)}</span>
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-3">
-              <h2 className="mb-3 font-semibold text-slate-700">Mis pedidos recientes</h2>
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-3 dark:border-slate-700 dark:bg-slate-800">
+              <h2 className="mb-3 font-semibold text-slate-700 dark:text-slate-200">Mis pedidos recientes</h2>
               {datos.pedidos_recientes.length === 0 ? (
-                <p className="text-sm text-slate-400">Aún no has registrado pedidos.</p>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Aún no has registrado pedidos.</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-slate-100 dark:divide-slate-700">
                   {datos.pedidos_recientes.map((p) => (
                     <li key={p.id} className="flex items-center justify-between py-2.5 text-sm">
-                      <Link to={`/pedidos/${p.id}`} className="font-medium text-emerald-700 hover:underline">
+                      <Link to={`/pedidos/${p.id}`} className="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
                         {p.numero_pedido} — {p.cliente?.nombre_razon_social}
                       </Link>
                       <Badge valor={p.estado} />

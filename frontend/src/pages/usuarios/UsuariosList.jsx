@@ -52,7 +52,7 @@ const UsuariosList = () => {
       <ConfirmDialog {...dialogProps} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Usuarios</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Usuarios</h1>
         <Link to="/usuarios/nuevo">
           <Button icon={Plus}>Nuevo usuario</Button>
         </Link>
@@ -61,9 +61,9 @@ const UsuariosList = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Correo</th>
@@ -72,24 +72,24 @@ const UsuariosList = () => {
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {usuarios.map((u) => (
-                <tr key={u.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-700">{u.nombre}</td>
-                  <td className="px-4 py-3 text-slate-600">{u.email}</td>
-                  <td className="px-4 py-3 text-slate-600">{u.rol?.nombre}</td>
+                <tr key={u.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{u.nombre}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{u.email}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{u.rol?.nombre}</td>
                   <td className="px-4 py-3"><Badge valor={u.estado} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-3">
                       <Link
                         to={`/usuarios/${u.id}/editar`}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
                         <Pencil size={14} /> Editar
                       </Link>
                       <button
                         onClick={() => toggleEstado(u)}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
                       >
                         {u.estado === 'activo' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                         {u.estado === 'activo' ? 'Desactivar' : 'Activar'}

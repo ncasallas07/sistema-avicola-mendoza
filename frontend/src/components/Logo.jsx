@@ -20,7 +20,7 @@ const Logo = ({ tamano = 'md', claro = false }) => {
       >
         <Bird size={t.icono} className={claro ? 'text-amber-300' : 'text-amber-400'} strokeWidth={2} />
       </div>
-      <span className={`${t.texto} font-bold tracking-tight ${claro ? 'text-white' : 'text-emerald-800'}`}>
+      <span className={`${t.texto} font-bold tracking-tight ${claro ? 'text-white' : 'text-emerald-800 dark:text-emerald-400'}`}>
         AVÍCOLA MENDOZA
       </span>
     </div>

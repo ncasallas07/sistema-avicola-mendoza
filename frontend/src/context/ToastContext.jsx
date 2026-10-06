@@ -32,10 +32,10 @@ export const ToastProvider = ({ children }) => {
             key={t.id}
             className={`rounded-lg px-4 py-3 text-sm shadow-lg border ${
               t.tipo === 'exito'
-                ? 'bg-green-50 border-green-200 text-green-800'
+                ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/40 dark:border-green-800 dark:text-green-300'
                 : t.tipo === 'error'
-                  ? 'bg-red-50 border-red-200 text-red-800'
-                  : 'bg-slate-50 border-slate-200 text-slate-800'
+                  ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/40 dark:border-red-800 dark:text-red-300'
+                  : 'bg-slate-50 border-slate-200 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100'
             }`}
           >
             {t.mensaje}

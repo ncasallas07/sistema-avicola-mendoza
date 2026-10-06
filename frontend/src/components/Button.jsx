@@ -3,12 +3,12 @@
 // ghost = terciaria (ej. "Limpiar filtros").
 const VARIANTES = {
   primary:
-    'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-300',
+    'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500 disabled:bg-emerald-300 dark:disabled:bg-emerald-900/50',
   secondary:
-    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-400 disabled:text-slate-300',
+    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-400 disabled:text-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 dark:disabled:text-slate-600',
   danger:
-    'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 focus-visible:ring-red-400 disabled:opacity-50',
-  ghost: 'text-slate-500 hover:bg-slate-100 focus-visible:ring-slate-400 disabled:opacity-50'
+    'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 focus-visible:ring-red-400 disabled:opacity-50 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/60',
+  ghost: 'text-slate-500 hover:bg-slate-100 focus-visible:ring-slate-400 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800'
 };
 
 const TAMANOS = {

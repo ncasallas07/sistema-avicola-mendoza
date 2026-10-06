@@ -8,15 +8,19 @@ const {
   editarProveedorSchema,
   cambiarEstadoSchema
 } = require('../validators/proveedor.validator');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
-// Gestión de proveedores: exclusiva del Administrador (el Vendedor no la necesita).
-router.use(verificarToken, verificarRol('Admin'));
+router.use(verificarToken);
 
-router.get('/', proveedorController.listar);
-router.get('/:id', proveedorController.obtener);
-router.post('/', validate(crearProveedorSchema), proveedorController.crear);
-router.put('/:id', validate(editarProveedorSchema), proveedorController.editar);
-router.patch('/:id/estado', validate(cambiarEstadoSchema), proveedorController.cambiarEstado);
+router.get('/', autorizar('proveedores.ver'), proveedorController.listar);
+router.get('/:id', autorizar('proveedores.ver'), proveedorController.obtener);
+router.post('/', autorizar('proveedores.crear'), validate(crearProveedorSchema), proveedorController.crear);
+router.put('/:id', autorizar('proveedores.editar'), validate(editarProveedorSchema), proveedorController.editar);
+router.patch(
+  '/:id/estado',
+  autorizar('proveedores.eliminar'),
+  validate(cambiarEstadoSchema),
+  proveedorController.cambiarEstado
+);
 
 module.exports = router;

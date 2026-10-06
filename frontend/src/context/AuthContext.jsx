@@ -36,12 +36,21 @@ export const AuthProvider = ({ children }) => {
     setUsuario(null);
   };
 
+  // Vuelve a consultar al backend los permisos vigentes del usuario (p. ej.
+  // después de que un administrador le retire un permiso a su rol mientras
+  // sigue con la sesión abierta en otra pestaña).
+  const refrescarPermisos = async () => {
+    const datos = await authService.obtenerPerfil();
+    setUsuario((actual) => (actual ? { ...actual, permisos: datos.permisos } : actual));
+  };
+
   const esAdmin = usuario?.rol === 'Admin';
   const esVendedor = usuario?.rol === 'Vendedor';
+  const tienePermiso = (codigo) => Boolean(usuario?.permisos?.includes(codigo));
 
   return (
     <AuthContext.Provider
-      value={{ usuario, cargando, iniciarSesion, cerrarSesion, esAdmin, esVendedor }}
+      value={{ usuario, cargando, iniciarSesion, cerrarSesion, refrescarPermisos, esAdmin, esVendedor, tienePermiso }}
     >
       {children}
     </AuthContext.Provider>

@@ -14,7 +14,10 @@ import { useConfirm } from '../../hooks/useConfirm';
 const formatoMoneda = (valor) => `$${Number(valor).toLocaleString('es-CO')}`;
 
 const ProductosList = () => {
-  const { esAdmin } = useAuth();
+  const { tienePermiso } = useAuth();
+  const puedeEditar = tienePermiso('productos.editar');
+  const puedeCambiarEstado = tienePermiso('productos.eliminar');
+  const mostrarColumnaAcciones = puedeEditar || puedeCambiarEstado;
   const toast = useToast();
   const { confirmar, dialogProps } = useConfirm();
   const [productos, setProductos] = useState([]);
@@ -69,32 +72,32 @@ const ProductosList = () => {
       <ConfirmDialog {...dialogProps} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Productos</h1>
-        {esAdmin && (
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Productos</h1>
+        {tienePermiso('productos.crear') && (
           <Link to="/productos/nuevo">
             <Button icon={Plus}>Nuevo producto</Button>
           </Link>
         )}
       </div>
 
-      <form onSubmit={buscar} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <form onSubmit={buscar} className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <input
           placeholder="Buscar por nombre"
           value={filtros.nombre}
           onChange={(e) => setFiltros({ ...filtros, nombre: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         />
         <select
           value={filtros.categoria_id}
           onChange={(e) => setFiltros({ ...filtros, categoria_id: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">Todas las categorías</option>
           {categorias.map((c) => (
             <option key={c.id} value={c.id}>{c.nombre}</option>
           ))}
         </select>
-        <label className="flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600">
+        <label className="flex items-center gap-2 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-600 dark:border-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
             checked={filtros.stock_bajo === 'true'}
@@ -108,9 +111,9 @@ const ProductosList = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Categoría</th>
@@ -118,39 +121,43 @@ const ProductosList = () => {
                 <th className="px-4 py-3">Precio</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Estado</th>
-                {esAdmin && <th className="px-4 py-3 text-right">Acciones</th>}
+                {mostrarColumnaAcciones && <th className="px-4 py-3 text-right">Acciones</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {productos.map((p) => {
                 const indicador = p.cantidad_disponible <= 0 ? 'agotado' : p.cantidad_disponible <= p.stock_minimo ? 'bajo' : 'normal';
                 return (
-                  <tr key={p.id} className="transition-colors hover:bg-slate-50">
-                    <td className="px-4 py-3 font-medium text-slate-700">{p.nombre}</td>
-                    <td className="px-4 py-3 text-slate-600">{p.categoria?.nombre || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{p.textura_presentacion || '—'}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatoMoneda(p.precio)} / {p.unidad_medida}</td>
+                  <tr key={p.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                    <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{p.nombre}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.categoria?.nombre || '—'}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.textura_presentacion || '—'}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{formatoMoneda(p.precio)} / {p.unidad_medida}</td>
                     <td className="px-4 py-3">
-                      <span className="font-medium text-slate-700">{p.cantidad_disponible}</span>{' '}
+                      <span className="font-medium text-slate-700 dark:text-slate-200">{p.cantidad_disponible}</span>{' '}
                       <Badge valor={indicador} />
                     </td>
                     <td className="px-4 py-3"><Badge valor={p.estado} /></td>
-                    {esAdmin && (
+                    {mostrarColumnaAcciones && (
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-3">
-                          <Link
-                            to={`/productos/${p.id}/editar`}
-                            className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
-                          >
-                            <Pencil size={14} /> Editar
-                          </Link>
-                          <button
-                            onClick={() => toggleEstado(p)}
-                            className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600"
-                          >
-                            {p.estado === 'activo' ? <PackageX size={14} /> : <PackageCheck size={14} />}
-                            {p.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                          </button>
+                          {puedeEditar && (
+                            <Link
+                              to={`/productos/${p.id}/editar`}
+                              className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
+                            >
+                              <Pencil size={14} /> Editar
+                            </Link>
+                          )}
+                          {puedeCambiarEstado && (
+                            <button
+                              onClick={() => toggleEstado(p)}
+                              className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                            >
+                              {p.estado === 'activo' ? <PackageX size={14} /> : <PackageCheck size={14} />}
+                              {p.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                            </button>
+                          )}
                         </div>
                       </td>
                     )}
@@ -159,8 +166,8 @@ const ProductosList = () => {
               })}
               {productos.length === 0 && (
                 <tr>
-                  <td colSpan={esAdmin ? 7 : 6} className="px-4 py-12">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                  <td colSpan={mostrarColumnaAcciones ? 7 : 6} className="px-4 py-12">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                       <PackageSearch size={28} />
                       <p className="text-sm">No se encontraron productos.</p>
                     </div>

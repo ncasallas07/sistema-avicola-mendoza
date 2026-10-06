@@ -92,11 +92,11 @@ const PedidoDetalle = () => {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Link to="/pedidos" className="flex items-center gap-1 text-sm text-emerald-700 hover:underline">
+          <Link to="/pedidos" className="flex items-center gap-1 text-sm text-emerald-700 hover:underline dark:text-emerald-400">
             <ArrowLeft size={14} /> Volver a pedidos
           </Link>
-          <h1 className="mt-1 text-2xl font-bold text-slate-800">{pedido.numero_pedido}</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="mt-1 text-2xl font-bold text-slate-800 dark:text-slate-100">{pedido.numero_pedido}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {new Date(pedido.fecha_creacion).toLocaleString('es-CO')} · Vendedor: {pedido.creadoPor?.nombre}
           </p>
         </div>
@@ -111,8 +111,8 @@ const PedidoDetalle = () => {
       </div>
 
       {siguientesEstados.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <span className="text-sm font-medium text-slate-500">Cambiar estado a:</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Cambiar estado a:</span>
           {siguientesEstados.map((estado) => (
             <Button
               key={estado}
@@ -127,29 +127,29 @@ const PedidoDetalle = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-2 dark:border-slate-700 dark:bg-slate-800">
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Cliente</p>
-          <p className="text-sm text-slate-700">{pedido.cliente?.nombre_razon_social}</p>
-          <p className="text-xs text-slate-400">Doc: {pedido.cliente?.documento}</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Cliente</p>
+          <p className="text-sm text-slate-700 dark:text-slate-200">{pedido.cliente?.nombre_razon_social}</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500">Doc: {pedido.cliente?.documento}</p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wide text-slate-400">Zona / Dirección</p>
-          <p className="text-sm text-slate-700">{pedido.cliente?.zona || '—'} · {pedido.cliente?.direccion || '—'}</p>
+          <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Zona / Dirección</p>
+          <p className="text-sm text-slate-700 dark:text-slate-200">{pedido.cliente?.zona || '—'} · {pedido.cliente?.direccion || '—'}</p>
         </div>
         {pedido.observaciones && (
           <div className="sm:col-span-2">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Observaciones</p>
-            <p className="text-sm text-slate-700">{pedido.observaciones}</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Observaciones</p>
+            <p className="text-sm text-slate-700 dark:text-slate-200">{pedido.observaciones}</p>
           </div>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 font-semibold text-slate-700">Productos</h2>
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <h2 className="mb-3 font-semibold text-slate-700 dark:text-slate-200">Productos</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs uppercase text-slate-400">
+            <thead className="text-left text-xs uppercase text-slate-400 dark:text-slate-500">
               <tr>
                 <th className="py-2">Producto</th>
                 <th className="py-2">Cantidad</th>
@@ -157,7 +157,7 @@ const PedidoDetalle = () => {
                 <th className="py-2 text-right">Subtotal</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700 dark:text-slate-200">
               {pedido.detalles?.map((d) => (
                 <tr key={d.id}>
                   <td className="py-2.5">{d.producto?.nombre}</td>
@@ -169,10 +169,10 @@ const PedidoDetalle = () => {
             </tbody>
           </table>
         </div>
-        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3 text-sm">
+        <div className="mt-3 flex justify-end border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
           <div className="text-right">
-            <p className="text-slate-500">Subtotal: ${Number(pedido.subtotal).toLocaleString('es-CO')}</p>
-            <p className="text-lg font-bold text-emerald-700">Total: ${Number(pedido.total).toLocaleString('es-CO')}</p>
+            <p className="text-slate-500 dark:text-slate-400">Subtotal: ${Number(pedido.subtotal).toLocaleString('es-CO')}</p>
+            <p className="text-lg font-bold text-emerald-700 dark:text-emerald-400">Total: ${Number(pedido.total).toLocaleString('es-CO')}</p>
           </div>
         </div>
       </div>

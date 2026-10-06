@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
+/* Habilita la variante dark: controlada por una clase .dark en <html>
+   (ThemeContext), en vez de depender únicamente de prefers-color-scheme,
+   para que el usuario pueda elegir el tema manualmente. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html.dark {
+  color-scheme: dark;
+}
+
 body {
-  @apply bg-slate-50 text-slate-800;
+  @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 transition-colors duration-150;
 }
 
 /* El comprobante (ComprobantePreview) usa print:hidden en su barra de

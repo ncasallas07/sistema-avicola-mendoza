@@ -47,14 +47,14 @@ const ComprobantePreview = () => {
 
   if (!pedido) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-100 px-4 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-100 px-4 text-center dark:bg-slate-900">
         <Logo tamano="md" />
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-8 py-10 shadow-sm">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
-            <FileWarning size={26} className="text-red-500" />
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-8 py-10 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-900/40">
+            <FileWarning size={26} className="text-red-500 dark:text-red-400" />
           </div>
-          <h1 className="text-lg font-bold text-slate-800">No se pudo generar el comprobante</h1>
-          <p className="max-w-xs text-sm text-slate-500">{error || 'No fue posible cargar este pedido.'}</p>
+          <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">No se pudo generar el comprobante</h1>
+          <p className="max-w-xs text-sm text-slate-500 dark:text-slate-400">{error || 'No fue posible cargar este pedido.'}</p>
           <Link to="/pedidos">
             <Button variant="secondary" icon={ArrowLeft}>Volver a pedidos</Button>
           </Link>
@@ -64,12 +64,12 @@ const ComprobantePreview = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-200 pb-16">
+    <div className="min-h-screen bg-slate-200 pb-16 dark:bg-slate-950">
       {/* Barra de acciones: se oculta al imprimir */}
-      <div className="print:hidden sticky top-0 z-10 flex items-center justify-between border-b border-slate-300 bg-white px-4 py-3 shadow-sm sm:px-6">
+      <div className="print:hidden sticky top-0 z-10 flex items-center justify-between border-b border-slate-300 bg-white px-4 py-3 shadow-sm sm:px-6 dark:border-slate-700 dark:bg-slate-800">
         <Link
           to={`/pedidos/${id}`}
-          className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700"
+          className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-400"
         >
           <ArrowLeft size={16} /> Volver al pedido
         </Link>

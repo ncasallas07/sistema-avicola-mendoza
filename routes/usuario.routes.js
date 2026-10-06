@@ -8,14 +8,18 @@ const {
   editarUsuarioSchema,
   cambiarEstadoSchema
 } = require('../validators/usuario.validator');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
-// Gestión de usuarios: exclusiva del Administrador.
-router.use(verificarToken, verificarRol('Admin'));
+router.use(verificarToken);
 
-router.get('/', usuarioController.listar);
-router.post('/', validate(crearUsuarioSchema), usuarioController.crear);
-router.put('/:id', validate(editarUsuarioSchema), usuarioController.editar);
-router.patch('/:id/estado', validate(cambiarEstadoSchema), usuarioController.cambiarEstado);
+router.get('/', autorizar('usuarios.ver'), usuarioController.listar);
+router.post('/', autorizar('usuarios.crear'), validate(crearUsuarioSchema), usuarioController.crear);
+router.put('/:id', autorizar('usuarios.editar'), validate(editarUsuarioSchema), usuarioController.editar);
+router.patch(
+  '/:id/estado',
+  autorizar('usuarios.eliminar'),
+  validate(cambiarEstadoSchema),
+  usuarioController.cambiarEstado
+);
 
 module.exports = router;

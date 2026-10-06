@@ -56,7 +56,7 @@ const ProveedoresList = () => {
       <ConfirmDialog {...dialogProps} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-800">Proveedores</h1>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Proveedores</h1>
         <Link to="/proveedores/nuevo">
           <Button icon={Plus}>Nuevo proveedor</Button>
         </Link>
@@ -67,13 +67,13 @@ const ProveedoresList = () => {
           e.preventDefault();
           cargar({ nombre });
         }}
-        className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+        className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-800"
       >
         <input
           placeholder="Buscar por nombre"
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm"
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         />
         <Button type="submit" variant="secondary" size="sm">Buscar</Button>
       </form>
@@ -81,9 +81,9 @@ const ProveedoresList = () => {
       {cargando ? (
         <Spinner />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-700/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Nombre / Razón social</th>
                 <th className="px-4 py-3">Identificación</th>
@@ -92,24 +92,24 @@ const ProveedoresList = () => {
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {proveedores.map((p) => (
-                <tr key={p.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-700">{p.nombre_razon_social}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.identificacion}</td>
-                  <td className="px-4 py-3 text-slate-600">{p.telefono || '—'}</td>
+                <tr key={p.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{p.nombre_razon_social}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.identificacion}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{p.telefono || '—'}</td>
                   <td className="px-4 py-3"><Badge valor={p.estado} /></td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-3">
                       <Link
                         to={`/proveedores/${p.id}/editar`}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-emerald-700 dark:text-slate-400 dark:hover:text-emerald-400"
                       >
                         <Pencil size={14} /> Editar
                       </Link>
                       <button
                         onClick={() => toggleEstado(p)}
-                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600"
+                        className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
                       >
                         {p.estado === 'activo' ? <Ban size={14} /> : <CheckCircle2 size={14} />}
                         {p.estado === 'activo' ? 'Desactivar' : 'Activar'}
@@ -121,7 +121,7 @@ const ProveedoresList = () => {
               {proveedores.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-12">
-                    <div className="flex flex-col items-center gap-2 text-slate-400">
+                    <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                       <Truck size={28} />
                       <p className="text-sm">No se encontraron proveedores.</p>
                     </div>

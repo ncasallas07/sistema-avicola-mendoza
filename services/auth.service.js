@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Usuario, Rol } = require('../models');
+const { obtenerPermisosDeRol } = require('./autorizacion.service');
 
 const login = async ({ email, password }) => {
   const usuario = await Usuario.findOne({
@@ -27,9 +28,21 @@ const login = async ({ email, password }) => {
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
+  // El JWT solo lleva lo mínimo (id, nombre, rol); los permisos se calculan
+  // en el momento desde la base de datos, tanto aquí como en /auth/me y en
+  // el middleware autorizar(), para que revocar un permiso tenga efecto
+  // inmediato sin esperar a que el token expire.
+  const permisos = Array.from(await obtenerPermisosDeRol(usuario.rol.nombre));
+
   return {
     token,
-    usuario: { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol.nombre }
+    usuario: {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol.nombre,
+      permisos
+    }
   };
 };
 

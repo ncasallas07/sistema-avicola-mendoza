@@ -4,22 +4,21 @@ const router = express.Router();
 const inventarioController = require('../controllers/inventario.controller');
 const validate = require('../middlewares/validate');
 const { movimientoSchema } = require('../validators/inventario.validator');
-const { verificarToken, verificarRol } = require('../middlewares/authMiddleware');
+const { verificarToken, autorizar } = require('../middlewares/authMiddleware');
 
 router.use(verificarToken);
 
-router.get('/', verificarRol('Admin', 'Vendedor'), inventarioController.listarExistencias);
-router.get('/movimientos', verificarRol('Admin', 'Vendedor'), inventarioController.listarMovimientos);
-// Los ajustes manuales de inventario (compras, ajustes) son exclusivos del Administrador.
+router.get('/', autorizar('inventario.ver'), inventarioController.listarExistencias);
+router.get('/movimientos', autorizar('inventario.ver'), inventarioController.listarMovimientos);
 router.post(
   '/entrada',
-  verificarRol('Admin'),
+  autorizar('inventario.registrar_movimiento'),
   validate(movimientoSchema),
   inventarioController.registrarEntrada
 );
 router.post(
   '/salida',
-  verificarRol('Admin'),
+  autorizar('inventario.registrar_movimiento'),
   validate(movimientoSchema),
   inventarioController.registrarSalida
 );

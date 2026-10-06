@@ -4,13 +4,13 @@ const crearUsuarioSchema = Joi.object({
   nombre: Joi.string().min(2).max(150).required(),
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
-  rol: Joi.string().valid('Admin', 'Vendedor').required()
+  rol_id: Joi.number().integer().positive().required()
 });
 
 const editarUsuarioSchema = Joi.object({
   nombre: Joi.string().min(2).max(150),
   email: Joi.string().email(),
-  rol: Joi.string().valid('Admin', 'Vendedor')
+  rol_id: Joi.number().integer().positive()
 }).min(1);
 
 const cambiarEstadoSchema = Joi.object({

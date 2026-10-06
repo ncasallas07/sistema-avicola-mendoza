@@ -9,30 +9,37 @@ import {
   Truck,
   BarChart3,
   KeyRound,
+  ShieldCheck,
   LogOut,
   Menu,
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 
+// permiso: null = visible para cualquier usuario autenticado. El resto solo
+// se muestra si el usuario tiene ese permiso — así el menú lateral se adapta
+// automáticamente a cualquier rol nuevo que cree un administrador, sin tocar
+// este archivo.
 const ITEMS_NAV = [
-  { to: '/', etiqueta: 'Dashboard', roles: ['Admin', 'Vendedor'], Icono: LayoutDashboard },
-  { to: '/pedidos', etiqueta: 'Pedidos', roles: ['Admin', 'Vendedor'], Icono: ClipboardList },
-  { to: '/clientes', etiqueta: 'Clientes', roles: ['Admin', 'Vendedor'], Icono: Users },
-  { to: '/productos', etiqueta: 'Productos', roles: ['Admin', 'Vendedor'], Icono: Package },
-  { to: '/inventario', etiqueta: 'Inventario', roles: ['Admin', 'Vendedor'], Icono: Boxes },
-  { to: '/proveedores', etiqueta: 'Proveedores', roles: ['Admin'], Icono: Truck },
-  { to: '/reportes', etiqueta: 'Reportes', roles: ['Admin'], Icono: BarChart3 },
-  { to: '/usuarios', etiqueta: 'Usuarios', roles: ['Admin'], Icono: KeyRound }
+  { to: '/', etiqueta: 'Dashboard', permiso: null, Icono: LayoutDashboard },
+  { to: '/pedidos', etiqueta: 'Pedidos', permiso: 'pedidos.ver', Icono: ClipboardList },
+  { to: '/clientes', etiqueta: 'Clientes', permiso: 'clientes.ver', Icono: Users },
+  { to: '/productos', etiqueta: 'Productos', permiso: 'productos.ver', Icono: Package },
+  { to: '/inventario', etiqueta: 'Inventario', permiso: 'inventario.ver', Icono: Boxes },
+  { to: '/proveedores', etiqueta: 'Proveedores', permiso: 'proveedores.ver', Icono: Truck },
+  { to: '/reportes', etiqueta: 'Reportes', permiso: 'reportes.ver', Icono: BarChart3 },
+  { to: '/usuarios', etiqueta: 'Usuarios', permiso: 'usuarios.ver', Icono: KeyRound },
+  { to: '/roles', etiqueta: 'Roles y permisos', permiso: 'roles.ver', Icono: ShieldCheck }
 ];
 
 const Layout = () => {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cerrarSesion, tienePermiso } = useAuth();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const navigate = useNavigate();
 
-  const itemsVisibles = ITEMS_NAV.filter((item) => item.roles.includes(usuario?.rol));
+  const itemsVisibles = ITEMS_NAV.filter((item) => !item.permiso || tienePermiso(item.permiso));
 
   const salir = async () => {
     await cerrarSesion();
@@ -40,12 +47,12 @@ const Layout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       {/* Barra superior */}
-      <header className="fixed top-0 inset-x-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6">
+      <header className="fixed top-0 inset-x-0 z-30 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm sm:px-6 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center gap-3">
           <button
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden dark:text-slate-400 dark:hover:bg-slate-800"
             onClick={() => setMenuAbierto((v) => !v)}
             aria-label="Abrir menú"
           >
@@ -53,14 +60,15 @@ const Layout = () => {
           </button>
           <Logo tamano="sm" />
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden text-right text-sm sm:block">
-            <p className="font-medium text-slate-700">{usuario?.nombre}</p>
-            <p className="text-xs font-medium uppercase tracking-wide text-emerald-600">{usuario?.rol}</p>
+            <p className="font-medium text-slate-700 dark:text-slate-200">{usuario?.nombre}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">{usuario?.rol}</p>
           </div>
+          <ThemeToggle />
           <button
             onClick={salir}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-red-900 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
             <LogOut size={15} />
             <span className="hidden sm:inline">Salir</span>

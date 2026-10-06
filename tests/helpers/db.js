@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const db = require('../../models');
+const { CATALOGO_PERMISOS, PERMISOS_POR_ROL_EXISTENTE } = require('../../seeders/data/permisos');
 
 const PASSWORD_PRUEBA = 'Cambiar123!';
 
@@ -15,6 +16,8 @@ const TABLAS_EN_ORDEN_DE_BORRADO = [
   'clientes',
   'proveedores',
   'usuarios',
+  'rol_permisos',
+  'permisos',
   'roles'
 ];
 
@@ -26,11 +29,31 @@ const limpiarBaseDatos = async () => {
   await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
 };
 
+// Crea el catálogo de permisos y se los asigna a Admin/Vendedor exactamente
+// igual que el seeder real (seeders/20260101000008 y 20260101000009), para
+// que las pruebas se ejecuten contra la misma matriz de permisos que
+// producción. Ambos usan seeders/data/permisos.js como única fuente.
+const sembrarPermisos = async (rolAdmin, rolVendedor) => {
+  const permisosCreados = await db.Permiso.bulkCreate(
+    CATALOGO_PERMISOS.map((p) => ({ nombre: p.nombre, codigo: p.codigo, modulo: p.modulo, estado: 'activo' }))
+  );
+  const idPorCodigo = Object.fromEntries(permisosCreados.map((p) => [p.codigo, p.id]));
+
+  const rolesPorNombre = { Admin: rolAdmin, Vendedor: rolVendedor };
+  for (const [nombreRol, rol] of Object.entries(rolesPorNombre)) {
+    const codigos = PERMISOS_POR_ROL_EXISTENTE[nombreRol] || [];
+    await rol.setPermisos(codigos.map((c) => idPorCodigo[c]));
+  }
+
+  return permisosCreados;
+};
+
 // Datos base mínimos que casi todas las suites necesitan: roles, un admin,
 // dos vendedores (para probar aislamiento entre ellos) y una categoría.
 const sembrarBase = async () => {
-  const rolAdmin = await db.Rol.create({ nombre: 'Admin' });
-  const rolVendedor = await db.Rol.create({ nombre: 'Vendedor' });
+  const rolAdmin = await db.Rol.create({ nombre: 'Admin', descripcion: 'Acceso completo', estado: 'activo' });
+  const rolVendedor = await db.Rol.create({ nombre: 'Vendedor', descripcion: 'Clientes y pedidos propios', estado: 'activo' });
+  await sembrarPermisos(rolAdmin, rolVendedor);
 
   // Costo de hash bajo únicamente en pruebas, para que la suite corra rápido;
   // el flujo de login real (bcrypt.compare) funciona igual sin importar el costo.
