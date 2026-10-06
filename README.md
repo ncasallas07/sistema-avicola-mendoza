@@ -2,6 +2,16 @@
 
 Plataforma web para AVÍCOLA MENDOZA que centraliza la gestión de clientes, proveedores, productos, inventario, pedidos, reportes y comprobantes comerciales, con roles y permisos dinámicos (los perfiles Administrador y Vendedor vienen precargados, pero un administrador puede crear roles nuevos y asignarles permisos sin tocar código) y tema claro/oscuro.
 
+## Demo en línea
+
+| Componente | Servicio | URL |
+|---|---|---|
+| Aplicación (frontend) | Vercel | https://avicola-mendoza.vercel.app |
+| API (backend) | Render | https://avicola-mendoza-api.onrender.com |
+| Base de datos | Aiven for MySQL 8.4 | Acceso privado (solo desde el backend) |
+
+> El backend usa el plan gratuito de Render: tras ~15 minutos sin uso se suspende y la primera petición puede tardar alrededor de 50 segundos en responder. Ver [Despliegue](#despliegue).
+
 ## Tecnologías
 
 **Frontend**
@@ -107,7 +117,7 @@ cp .env.example .env
 
 | Variable | Obligatoria | Descripción |
 |---|---|---|
-| `VITE_API_URL` | Sí | URL base de la API. En local: `http://localhost:3000/api`. En Vercel: la URL pública del backend en Railway + `/api` |
+| `VITE_API_URL` | Sí | URL base de la API. En local: `http://localhost:3000/api`. En Vercel: la URL pública del backend en Render + `/api` |
 
 ## Ejecución
 
@@ -181,7 +191,7 @@ Mecanismos implementados en el backend:
 - **bcrypt/bcryptjs** para el hash de contraseñas — nunca se almacenan en texto plano.
 - **Joi** para validar los datos de entrada en todos los endpoints de escritura.
 - **Helmet** para cabeceras HTTP de seguridad.
-- **Rate limiting** (`express-rate-limit`) en el endpoint de login, para mitigar intentos de fuerza bruta. En producción (`NODE_ENV=production`) se habilita `trust proxy` con un único salto (el proxy de Railway), para que el límite se aplique por IP real del cliente y no quede expuesto a spoofing vía `X-Forwarded-For`.
+- **Rate limiting** (`express-rate-limit`) en el endpoint de login, para mitigar intentos de fuerza bruta. En producción (`NODE_ENV=production`) se habilita `trust proxy` con un único salto (el proxy de Render), para que el límite se aplique por IP real del cliente y no quede expuesto a spoofing vía `X-Forwarded-For`.
 - **Roles y permisos** verificados en el backend en cada petición (middleware `autorizar(codigo)`), no únicamente ocultos en la interfaz.
 - **CORS restringido por entorno**: en desarrollo siempre se permite `http://localhost:5173`; en producción se agrega además el dominio del frontend configurado en `FRONTEND_URL`. Nunca se usa `origin: '*'`.
 
