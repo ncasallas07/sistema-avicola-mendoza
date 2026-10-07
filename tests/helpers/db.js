@@ -15,6 +15,7 @@ const TABLAS_EN_ORDEN_DE_BORRADO = [
   'categorias',
   'clientes',
   'proveedores',
+  'password_reset_tokens',
   'usuarios',
   'rol_permisos',
   'permisos',

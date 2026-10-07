@@ -2,6 +2,19 @@ const bcrypt = require('bcryptjs');
 const { Usuario, Rol, Permiso } = require('../models');
 const { esRolAdministrador, contarAdministradoresActivos } = require('./autorizacion.service');
 
+const CAMPOS_EMPLEADO = [
+  'tipo_documento',
+  'numero_documento',
+  'telefono',
+  'direccion',
+  'rh',
+  'eps',
+  'arl',
+  'cargo',
+  'fecha_nacimiento',
+  'fecha_ingreso'
+];
+
 const listar = async () => {
   return Usuario.findAll({
     attributes: { exclude: ['password'] },
@@ -19,13 +32,46 @@ const obtenerRolActivo = async (rol_id) => {
   return rol;
 };
 
-const crear = async ({ nombre, email, password, rol_id }) => {
+// fecha_ingreso antes de fecha_nacimiento es incoherente (nadie empieza a
+// trabajar antes de nacer); el resto de combinaciones son válidas sin más
+// reglas artificiales (altas/vinculaciones el mismo día de nacer no aplican
+// en la práctica, pero no hace falta modelar una edad mínima aquí).
+const validarCoherenciaFechas = ({ fecha_nacimiento, fecha_ingreso }) => {
+  if (fecha_nacimiento && fecha_ingreso && new Date(fecha_ingreso) < new Date(fecha_nacimiento)) {
+    const error = new Error('La fecha de ingreso no puede ser anterior a la fecha de nacimiento');
+    error.status = 400;
+    throw error;
+  }
+};
+
+const asegurarNumeroDocumentoUnico = async (numero_documento, idExcluido) => {
+  if (!numero_documento) return;
+  const existente = await Usuario.findOne({ where: { numero_documento } });
+  if (existente && existente.id !== idExcluido) {
+    const error = new Error('Ya existe un usuario registrado con ese número de documento');
+    error.status = 409;
+    throw error;
+  }
+};
+
+const serializar = (usuario, rol) => {
+  const datos = { id: usuario.id, nombre: usuario.nombre, email: usuario.email, estado: usuario.estado, rol };
+  for (const campo of CAMPOS_EMPLEADO) datos[campo] = usuario[campo] ?? null;
+  return datos;
+};
+
+const crear = async (payload) => {
+  const { nombre, email, password, rol_id, ...camposEmpleado } = payload;
+
   const existente = await Usuario.findOne({ where: { email } });
   if (existente) {
     const error = new Error('El email ya está registrado');
     error.status = 409;
     throw error;
   }
+
+  validarCoherenciaFechas(camposEmpleado);
+  await asegurarNumeroDocumentoUnico(camposEmpleado.numero_documento);
 
   const rol = await obtenerRolActivo(rol_id);
 
@@ -34,10 +80,11 @@ const crear = async ({ nombre, email, password, rol_id }) => {
     nombre,
     email,
     password: passwordHash,
-    rol_id: rol.id
+    rol_id: rol.id,
+    ...Object.fromEntries(CAMPOS_EMPLEADO.map((c) => [c, camposEmpleado[c] || null]))
   });
 
-  return { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: { id: rol.id, nombre: rol.nombre } };
+  return serializar(usuario, { id: rol.id, nombre: rol.nombre });
 };
 
 const editar = async (id, cambios) => {
@@ -68,8 +115,22 @@ const editar = async (id, cambios) => {
   if (cambios.nombre) usuario.nombre = cambios.nombre;
   if (cambios.email) usuario.email = cambios.email;
 
+  const fechasAValidar = {
+    fecha_nacimiento: cambios.fecha_nacimiento !== undefined ? cambios.fecha_nacimiento : usuario.fecha_nacimiento,
+    fecha_ingreso: cambios.fecha_ingreso !== undefined ? cambios.fecha_ingreso : usuario.fecha_ingreso
+  };
+  validarCoherenciaFechas(fechasAValidar);
+
+  if (cambios.numero_documento !== undefined) {
+    await asegurarNumeroDocumentoUnico(cambios.numero_documento, usuario.id);
+  }
+
+  for (const campo of CAMPOS_EMPLEADO) {
+    if (cambios[campo] !== undefined) usuario[campo] = cambios[campo] || null;
+  }
+
   await usuario.save();
-  return usuario;
+  return serializar(usuario, { id: usuario.rol.id, nombre: usuario.rol.nombre });
 };
 
 const cambiarEstado = async (id, estado) => {
@@ -91,7 +152,7 @@ const cambiarEstado = async (id, estado) => {
 
   usuario.estado = estado;
   await usuario.save();
-  return usuario;
+  return serializar(usuario, { id: usuario.rol.id, nombre: usuario.rol.nombre });
 };
 
 module.exports = { listar, crear, editar, cambiarEstado };

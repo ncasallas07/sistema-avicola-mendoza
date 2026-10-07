@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AlertCircle, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
@@ -80,6 +80,13 @@ const Login = () => {
             <Button type="submit" loading={cargando} className="mt-1 w-full" size="lg">
               {cargando ? 'Ingresando...' : 'Iniciar sesión'}
             </Button>
+
+            <Link
+              to="/olvide-contrasena"
+              className="text-center text-sm text-emerald-700 hover:underline dark:text-emerald-400"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
           </form>
         </div>
       </div>

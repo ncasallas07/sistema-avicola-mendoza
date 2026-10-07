@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
 import Login from './pages/Login';
+import OlvideContrasena from './pages/OlvideContrasena';
+import RestablecerContrasena from './pages/RestablecerContrasena';
 import Dashboard from './pages/Dashboard';
 import ClientesList from './pages/clientes/ClientesList';
 import ClienteForm from './pages/clientes/ClienteForm';
@@ -35,6 +37,8 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/olvide-contrasena" element={<OlvideContrasena />} />
+            <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
 
             <Route element={<ProtectedRoute />}>
               {/* Fuera del Layout: el comprobante no debe mostrar sidebar ni navegación */}

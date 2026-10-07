@@ -106,7 +106,11 @@ cp .env.example .env
 | `JWT_SECRET` | Sí | Secreto para firmar los JWT — **debe ser distinto y aleatorio en producción** |
 | `JWT_EXPIRES_IN` | Sí | Vigencia del token (p. ej. `8h`) |
 | `NODE_ENV` | Sí | `development` \| `test` \| `production` |
-| `FRONTEND_URL` | Solo en producción | URL pública del frontend (Vercel), para CORS. Admite varias separadas por coma |
+| `FRONTEND_URL` | Solo en producción | URL pública del frontend (Vercel), para CORS **y** para armar el enlace del correo de recuperación de contraseña. Admite varias separadas por coma (se usa la primera para el enlace) |
+| `SMTP_HOST` | Solo en producción | Host del proveedor SMTP para enviar el correo de recuperación. Sin esto, en desarrollo el enlace se imprime en consola en vez de enviarse |
+| `SMTP_PORT` | No | Puerto SMTP (587 por defecto; 465 activa conexión implícita en TLS) |
+| `SMTP_USER` / `SMTP_PASSWORD` | No | Credenciales del proveedor SMTP, si las requiere |
+| `SMTP_FROM` | No | Remitente del correo (por defecto `"AVÍCOLA MENDOZA" <no-reply@avicolamendoza.com>`) |
 
 Frontend:
 
@@ -178,6 +182,19 @@ Los dos roles precargados por el seeder son:
 - **Vendedor**: gestiona clientes y pedidos propios, consulta productos e inventario; no accede a usuarios, roles, proveedores ni reportes.
 
 El sistema protege además al último administrador: no es posible desactivar, eliminar o quitarle los permisos de administración al único rol/usuario capaz de gestionar roles y usuarios.
+
+### Ficha de empleado
+
+Además de nombre/correo/rol, un usuario puede tener datos de empleado (todos opcionales): tipo y número de documento (CC/CE/TI/PA — se exigen juntos, no uno sin el otro), teléfono, dirección, cargo, RH (lista controlada: A+, A-, B+, B-, AB+, AB-, O+, O-), EPS, ARL, fecha de nacimiento (no puede ser futura) y fecha de ingreso (no puede ser anterior a la fecha de nacimiento). Se gestionan con los mismos permisos (`usuarios.crear`/`usuarios.editar`) y endpoints ya existentes de usuarios.
+
+## Recuperación de contraseña
+
+Flujo independiente del login, que no usa el JWT de sesión en ningún punto:
+
+1. `POST /api/auth/forgot-password` `{ email }` — siempre responde el mismo mensaje genérico exista o no el correo (evita enumerar usuarios). Si el correo corresponde a un usuario activo, genera un token y envía un enlace a `${FRONTEND_URL}/restablecer-contrasena?token=...`.
+2. `POST /api/auth/reset-password` `{ token, password }` — valida que el token exista, no haya expirado (60 minutos) y no se haya usado antes; si es válido, actualiza la contraseña (con el mismo hash de bcrypt que usa el resto del sistema) e invalida el token de inmediato.
+
+El token se genera con `crypto.randomBytes(32)` (no es un JWT ni se deriva de uno) y en la base de datos solo se guarda su hash SHA-256 (tabla `password_reset_tokens`), nunca el token en claro. Ambos endpoints son públicos (no requieren sesión ni permisos — recuperar la propia cuenta no depende de rol) y tienen su propio límite de solicitudes por IP, igual que el login.
 
 ## Tema claro/oscuro
 

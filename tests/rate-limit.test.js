@@ -31,4 +31,21 @@ describe('Rate limit de login', () => {
       data: null
     });
   });
+
+  it('limita las solicitudes de "olvidé mi contraseña" (el límite es de 5 por ventana)', async () => {
+    for (let i = 0; i < 5; i++) {
+      await request(app).post('/api/auth/forgot-password').send({ email: 'no-existe@avicolamendoza.com' });
+    }
+
+    const res = await request(app)
+      .post('/api/auth/forgot-password')
+      .send({ email: 'no-existe@avicolamendoza.com' });
+
+    expect(res.status).toBe(429);
+    expect(res.body).toEqual({
+      success: false,
+      message: expect.any(String),
+      data: null
+    });
+  });
 });
