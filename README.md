@@ -107,10 +107,10 @@ cp .env.example .env
 | `JWT_EXPIRES_IN` | Sí | Vigencia del token (p. ej. `8h`) |
 | `NODE_ENV` | Sí | `development` \| `test` \| `production` |
 | `FRONTEND_URL` | Solo en producción | URL pública del frontend (Vercel), para CORS **y** para armar el enlace del correo de recuperación de contraseña. Admite varias separadas por coma (se usa la primera para el enlace) |
-| `SMTP_HOST` | Solo en producción | Host del proveedor SMTP para enviar el correo de recuperación. Sin esto, en desarrollo el enlace se imprime en consola en vez de enviarse |
-| `SMTP_PORT` | No | Puerto SMTP (587 por defecto; 465 activa conexión implícita en TLS) |
-| `SMTP_USER` / `SMTP_PASSWORD` | No | Credenciales del proveedor SMTP, si las requiere |
-| `SMTP_FROM` | No | Remitente del correo (por defecto `"AVÍCOLA MENDOZA" <no-reply@avicolamendoza.com>`) |
+| `BREVO_API_KEY` | Solo en producción | API key de Brevo para enviar el correo de recuperación por HTTPS (opción usada en Render, que bloquea los puertos SMTP en el plan gratuito). Tiene prioridad sobre SMTP |
+| `MAIL_FROM_EMAIL` | Con Brevo | Correo remitente, previamente verificado en Brevo |
+| `MAIL_FROM_NAME` | No | Nombre del remitente (por defecto `AVÍCOLA MENDOZA`) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` | No | Alternativa por SMTP, solo para hostings que permitan esos puertos. Sin Brevo ni SMTP, en desarrollo el enlace de recuperación se imprime en consola |
 
 Frontend:
 
@@ -214,35 +214,73 @@ Mecanismos implementados en el backend:
 
 ## Despliegue
 
-Arquitectura de publicación prevista:
+La aplicación está publicada con servicios en plan gratuito:
 
 ```text
-Frontend → Vercel (React + Vite)
-Backend  → Railway (Node.js + Express, servidor tradicional vía "npm start")
-Database → MySQL administrado en Railway
+Usuario ──▶ Vercel (React + Vite)  ──HTTPS──▶  Render (Node.js + Express)  ──TLS──▶  Aiven (MySQL 8.4)
+            avicola-mendoza.vercel.app         avicola-mendoza-api.onrender.com
+                                                        │
+                                                        └──HTTPS──▶ Brevo (correo de recuperación)
 ```
+
+Vercel despliega el frontend automáticamente con cada `git push` a `main`. **Render no**: el servicio está conectado como repositorio público, sin despliegue automático, así que después de cada `git push` hay que entrar a Render → *Manual Deploy* → *Deploy latest commit* (o conectar la cuenta de GitHub en *Settings → Repository* para activar el despliegue automático).
+
+### Base de datos (Aiven for MySQL)
+
+1. Crear un servicio **MySQL** en el plan **Free** de Aiven.
+2. Tomar de *Connection information* el host, puerto, usuario (`avnadmin`), contraseña y base (`defaultdb`) para las variables `DB_*` del backend.
+3. Aiven exige conexión cifrada, por lo que el backend usa `DB_SSL=true`.
+4. Aiven exige que todas las tablas tengan llave primaria; las migraciones del proyecto ya cumplen esta condición.
+
+### Backend (Render)
+
+1. Crear un **Web Service** en Render a partir del repositorio, en el plan **Free**.
+2. Configuración del servicio:
+
+   | Campo | Valor |
+   |---|---|
+   | Root Directory | *(vacío, raíz del repositorio)* |
+   | Build Command | `npm ci --include=dev` |
+   | Start Command | `npm run db:migrate && npm start` |
+
+   `--include=dev` es necesario porque `sequelize-cli` (usado por las migraciones) está en `devDependencies` y, con `NODE_ENV=production`, npm lo omitiría. Las migraciones pendientes se aplican solas en cada despliegue.
+3. Variables de entorno:
+
+   | Variable | Valor |
+   |---|---|
+   | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | Datos de conexión de Aiven |
+   | `DB_SSL` | `true` |
+   | `NODE_ENV` | `production` |
+   | `NODE_VERSION` | `24` |
+   | `JWT_SECRET` | Valor aleatorio (botón *Generate* de Render) |
+   | `JWT_EXPIRES_IN` | `8h` |
+   | `FRONTEND_URL` | `https://avicola-mendoza.vercel.app` |
+   | `BREVO_API_KEY` | API key de Brevo (recuperación de contraseña) |
+   | `MAIL_FROM_EMAIL` | Remitente verificado en Brevo |
+   | `MAIL_FROM_NAME` | `AVÍCOLA MENDOZA` (opcional) |
+
+   `PORT` no se define: Render lo asigna automáticamente.
+4. **Datos iniciales (solo la primera vez):** el primer despliegue se hizo con el Start Command `npm run db:migrate && npm run db:seed && npm start` y, una vez cargados los datos, se dejó en `npm run db:migrate && npm start`. Los seeders no llevan registro de ejecución, así que **no deben volver a incluirse en el comando de inicio**.
+
+### Correo de recuperación (Brevo)
+
+Desde septiembre de 2025 los servicios gratuitos de Render bloquean la salida a los puertos SMTP (25, 465 y 587), así que el correo se envía con la **API HTTPS de Brevo** (puerto 443) en vez de SMTP:
+
+1. Crear una cuenta gratuita en Brevo y verificar el correo remitente (*Senders, Domains & Dedicated IPs → Senders*).
+2. Generar una API key (*SMTP & API → API Keys*).
+3. Configurar en Render `BREVO_API_KEY` y `MAIL_FROM_EMAIL` (el remitente verificado) y volver a desplegar.
+
+Si el envío falla, el usuario igual ve el mensaje genérico (para no revelar qué correos existen) y el motivo queda en los logs de Render como `No se pudo enviar el correo de recuperación: ...`.
 
 ### Frontend (Vercel)
 
-1. Conectar el repositorio de GitHub en Vercel, con **Root Directory = `frontend`**.
-2. Build command: `npm run build` · Output directory: `dist` (detectado automáticamente para un proyecto Vite).
-3. Configurar la variable de entorno `VITE_API_URL` en Vercel con la URL pública del backend en Railway (p. ej. `https://tu-backend.up.railway.app/api`).
-4. `frontend/vercel.json` ya incluye el *rewrite* necesario para que rutas como `/pedidos/5` o `/roles` no devuelvan 404 al recargar directamente (fallback de SPA a `index.html`).
+1. Importar el repositorio en Vercel como proyecto único con **Root Directory = `frontend`** (preset Vite; build `npm run build`, salida `dist`).
+2. Variable de entorno: `VITE_API_URL=https://avicola-mendoza-api.onrender.com/api`.
+3. `frontend/vercel.json` incluye el *rewrite* que redirige todas las rutas a `index.html`, para que recargar `/pedidos/5`, `/roles` o `/restablecer-contrasena` no devuelva 404.
 
-### Backend (Railway)
+### Limitaciones del plan gratuito
 
-1. Conectar el repositorio; Railway detecta el proyecto Node automáticamente y ejecuta `npm start` (no requiere adaptarlo a funciones serverless).
-2. Configurar las variables de entorno del backend (ver tabla en [Variables de entorno](#variables-de-entorno)), incluyendo `NODE_ENV=production` y `FRONTEND_URL` con la URL real de Vercel.
-3. El `JWT_SECRET` de producción debe generarse nuevo (largo y aleatorio) y nunca reutilizar el de desarrollo.
+- **Render:** el servicio se suspende tras ~15 minutos sin tráfico; la primera petición posterior puede tardar ~50 segundos.
+- **Aiven:** el servicio gratuito se apaga tras un periodo de inactividad; si el backend no logra conectarse, se enciende desde la consola de Aiven (*Power on*).
 
-### Base de datos (MySQL en Railway)
-
-1. Aprovisionar un plugin de MySQL en Railway y tomar sus credenciales (host, puerto, usuario, contraseña, nombre de base) para las variables `DB_*` del backend.
-2. Si el proveedor exige TLS en la conexión, poner `DB_SSL=true`.
-3. Aplicar una sola vez, contra esa base (vía la consola/shell de Railway o una ejecución puntual con las variables de producción):
-   ```bash
-   npm run db:migrate
-   npm run db:seed
-   ```
-
-> Este repositorio no incluye URLs ni credenciales de un despliegue real: deben configurarse en Vercel/Railway por quien tenga acceso a esas cuentas.
+> Las credenciales reales (contraseña de la base, `JWT_SECRET`, `BREVO_API_KEY`) solo están configuradas en los paneles de Render y Aiven; nunca se suben al repositorio.

@@ -1,5 +1,13 @@
 const nodemailer = require('nodemailer');
 
+// Tiempo máximo para hablar con el proveedor de correo. Sin un límite, una
+// conexión bloqueada (p. ej. un puerto SMTP filtrado por el hosting) dejaría
+// la petición HTTP colgada hasta que el proxy la corte.
+const TIMEOUT_MS = 10000;
+
+const BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
+const NOMBRE_REMITENTE_POR_DEFECTO = 'AVÍCOLA MENDOZA';
+
 let transporter = null;
 
 const obtenerTransporter = () => {
@@ -8,6 +16,9 @@ const obtenerTransporter = () => {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT) || 587,
     secure: String(process.env.SMTP_PORT) === '465',
+    connectionTimeout: TIMEOUT_MS,
+    greetingTimeout: TIMEOUT_MS,
+    socketTimeout: TIMEOUT_MS,
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
       : undefined
@@ -37,25 +48,69 @@ const plantillaRecuperacion = ({ nombre, enlace, minutosExpiracion }) => `
   </div>
 `;
 
-// Si no hay SMTP configurado: en desarrollo se registra el enlace en consola
-// (para poder probar el flujo de punta a punta sin un proveedor real); en
-// producción se considera un error de configuración y se lanza, en vez de
+// Envío por la API HTTPS de Brevo (puerto 443). Se usa en producción porque
+// los servicios gratuitos de Render bloquean la salida a los puertos SMTP
+// (25, 465 y 587), así que nodemailer/SMTP nunca lograría conectarse allí.
+// Se usa fetch nativo de Node (>= 18): no hace falta un SDK adicional.
+const enviarConBrevo = async ({ to, nombre, subject, html }) => {
+  const remitente = process.env.MAIL_FROM_EMAIL;
+  if (!remitente) {
+    throw new Error('Falta MAIL_FROM_EMAIL: el remitente (verificado en Brevo) es obligatorio para enviar correos.');
+  }
+
+  const respuesta = await fetch(BREVO_URL, {
+    method: 'POST',
+    headers: {
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json',
+      accept: 'application/json'
+    },
+    body: JSON.stringify({
+      sender: { email: remitente, name: process.env.MAIL_FROM_NAME || NOMBRE_REMITENTE_POR_DEFECTO },
+      to: [{ email: to, ...(nombre ? { name: nombre } : {}) }],
+      subject,
+      htmlContent: html
+    }),
+    signal: AbortSignal.timeout(TIMEOUT_MS)
+  });
+
+  if (!respuesta.ok) {
+    const detalle = await respuesta.text().catch(() => '');
+    throw new Error(`Brevo respondió ${respuesta.status}: ${detalle.slice(0, 300)}`);
+  }
+};
+
+const enviarConSmtp = async ({ to, subject, html }) => {
+  const remitente = process.env.MAIL_FROM_EMAIL
+    ? `"${process.env.MAIL_FROM_NAME || NOMBRE_REMITENTE_POR_DEFECTO}" <${process.env.MAIL_FROM_EMAIL}>`
+    : process.env.SMTP_FROM || `"${NOMBRE_REMITENTE_POR_DEFECTO}" <no-reply@avicolamendoza.com>`;
+
+  await obtenerTransporter().sendMail({ from: remitente, to, subject, html });
+};
+
+// Orden de preferencia: 1) Brevo (BREVO_API_KEY), 2) SMTP (SMTP_HOST).
+// Si no hay ninguno configurado: en desarrollo/pruebas se registra el enlace
+// en consola (para probar el flujo de punta a punta sin un proveedor real);
+// en producción se considera un error de configuración y se lanza, en vez de
 // fingir que el correo se envió.
 const enviarCorreoRecuperacion = async ({ to, nombre, enlace, minutosExpiracion }) => {
-  if (!process.env.SMTP_HOST) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('SMTP no configurado: no se puede enviar el correo de recuperación en producción.');
-    }
-    console.log(`[email] SMTP no configurado (modo desarrollo). Enlace de recuperación para ${to}: ${enlace}`);
+  const subject = 'Restablece tu contraseña — AVÍCOLA MENDOZA';
+  const html = plantillaRecuperacion({ nombre, enlace, minutosExpiracion });
+
+  if (process.env.BREVO_API_KEY) {
+    await enviarConBrevo({ to, nombre, subject, html });
     return;
   }
 
-  await obtenerTransporter().sendMail({
-    from: process.env.SMTP_FROM || '"AVÍCOLA MENDOZA" <no-reply@avicolamendoza.com>',
-    to,
-    subject: 'Restablece tu contraseña — AVÍCOLA MENDOZA',
-    html: plantillaRecuperacion({ nombre, enlace, minutosExpiracion })
-  });
+  if (process.env.SMTP_HOST) {
+    await enviarConSmtp({ to, subject, html });
+    return;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Correo no configurado: define BREVO_API_KEY (o SMTP_HOST) para enviar el correo de recuperación en producción.');
+  }
+  console.log(`[email] Proveedor de correo no configurado (modo desarrollo). Enlace de recuperación para ${to}: ${enlace}`);
 };
 
 module.exports = { enviarCorreoRecuperacion };
