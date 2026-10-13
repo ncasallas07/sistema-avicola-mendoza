@@ -6,4 +6,8 @@ const editar = async (id, payload) => (await api.put(`/usuarios/${id}`, payload)
 const cambiarEstado = async (id, estado) =>
   (await api.patch(`/usuarios/${id}/estado`, { estado })).data.data;
 
-export default { listar, crear, editar, cambiarEstado };
+// Eliminación lógica: el usuario deja de aparecer en la lista, pero su
+// registro e historial se conservan en la base de datos.
+const eliminar = async (id) => (await api.delete(`/usuarios/${id}`)).data;
+
+export default { listar, crear, editar, cambiarEstado, eliminar };

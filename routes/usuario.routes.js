@@ -21,5 +21,8 @@ router.patch(
   validate(cambiarEstadoSchema),
   usuarioController.cambiarEstado
 );
+// Eliminación lógica (no borra el registro). Usa el mismo permiso que
+// activar/desactivar: usuarios.eliminar.
+router.delete('/:id', autorizar('usuarios.eliminar'), usuarioController.eliminar);
 
 module.exports = router;

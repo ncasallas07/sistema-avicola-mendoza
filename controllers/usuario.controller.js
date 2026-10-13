@@ -31,4 +31,9 @@ const cambiarEstado = async (req, res) => {
   exito(res, { mensaje: 'Estado del usuario actualizado', datos: usuario });
 };
 
-module.exports = { listar, crear, editar, cambiarEstado };
+const eliminar = async (req, res) => {
+  const usuario = await usuarioService.eliminar(Number(req.params.id), req.usuario);
+  exito(res, { mensaje: 'Usuario eliminado correctamente. Su información histórica se conserva.', datos: usuario });
+};
+
+module.exports = { listar, crear, editar, cambiarEstado, eliminar };

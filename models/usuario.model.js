@@ -12,8 +12,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       password: { type: DataTypes.STRING(255), allowNull: false },
       rol_id: { type: DataTypes.INTEGER, allowNull: false },
+      // 'eliminado' = eliminación lógica: el usuario no aparece en la lista ni
+      // puede iniciar sesión, pero su registro e historial se conservan.
       estado: {
-        type: DataTypes.ENUM('activo', 'inactivo'),
+        type: DataTypes.ENUM('activo', 'inactivo', 'eliminado'),
         allowNull: false,
         defaultValue: 'activo'
       },

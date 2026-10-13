@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const { Op } = require('sequelize');
 const { Usuario, Rol, Permiso } = require('../models');
 const { esRolAdministrador, contarAdministradoresActivos } = require('./autorizacion.service');
 
@@ -15,8 +16,19 @@ const CAMPOS_EMPLEADO = [
   'fecha_ingreso'
 ];
 
+// Usuarios con eliminación lógica: no se listan ni se pueden editar,
+// activar o desactivar, pero su registro permanece en la base de datos.
+const ELIMINADO = 'eliminado';
+
+const noEncontrado = () => {
+  const error = new Error('Usuario no encontrado');
+  error.status = 404;
+  return error;
+};
+
 const listar = async () => {
   return Usuario.findAll({
+    where: { estado: { [Op.ne]: ELIMINADO } },
     attributes: { exclude: ['password'] },
     include: [{ model: Rol, as: 'rol', attributes: ['id', 'nombre'] }]
   });
@@ -89,10 +101,8 @@ const crear = async (payload) => {
 
 const editar = async (id, cambios) => {
   const usuario = await Usuario.findByPk(id, { include: [{ model: Rol, as: 'rol', include: [{ model: Permiso, as: 'permisos' }] }] });
-  if (!usuario) {
-    const error = new Error('Usuario no encontrado');
-    error.status = 404;
-    throw error;
+  if (!usuario || usuario.estado === ELIMINADO) {
+    throw noEncontrado();
   }
 
   if (cambios.rol_id && cambios.rol_id !== usuario.rol_id) {
@@ -135,10 +145,9 @@ const editar = async (id, cambios) => {
 
 const cambiarEstado = async (id, estado) => {
   const usuario = await Usuario.findByPk(id, { include: [{ model: Rol, as: 'rol', include: [{ model: Permiso, as: 'permisos' }] }] });
-  if (!usuario) {
-    const error = new Error('Usuario no encontrado');
-    error.status = 404;
-    throw error;
+  // Un usuario eliminado no puede reactivarse por esta vía.
+  if (!usuario || usuario.estado === ELIMINADO) {
+    throw noEncontrado();
   }
 
   if (estado === 'inactivo' && esRolAdministrador(usuario.rol)) {
@@ -155,4 +164,33 @@ const cambiarEstado = async (id, estado) => {
   return serializar(usuario, { id: usuario.rol.id, nombre: usuario.rol.nombre });
 };
 
-module.exports = { listar, crear, editar, cambiarEstado };
+// Eliminación lógica: solo cambia usuarios.estado a 'eliminado'. No se ejecuta
+// ningún DELETE ni se modifican pedidos, movimientos de inventario u otras
+// tablas relacionadas, que siguen apuntando al mismo usuario_id.
+const eliminar = async (id, usuarioAutenticado) => {
+  const usuario = await Usuario.findByPk(id, { include: [{ model: Rol, as: 'rol', include: [{ model: Permiso, as: 'permisos' }] }] });
+  if (!usuario || usuario.estado === ELIMINADO) {
+    throw noEncontrado();
+  }
+
+  if (usuario.id === usuarioAutenticado.id) {
+    const error = new Error('No puedes eliminar tu propia cuenta.');
+    error.status = 409;
+    throw error;
+  }
+
+  if (usuario.estado === 'activo' && esRolAdministrador(usuario.rol)) {
+    const restantes = await contarAdministradoresActivos({ excluirUsuarioId: usuario.id });
+    if (restantes === 0) {
+      const error = new Error('No puedes eliminar al único administrador activo del sistema.');
+      error.status = 409;
+      throw error;
+    }
+  }
+
+  usuario.estado = ELIMINADO;
+  await usuario.save();
+  return { id: usuario.id, nombre: usuario.nombre, estado: usuario.estado };
+};
+
+module.exports = { listar, crear, editar, cambiarEstado, eliminar };

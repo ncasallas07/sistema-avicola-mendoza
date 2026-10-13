@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { obtenerPermisosDeRol } = require('../services/autorizacion.service');
+const { Usuario } = require('../models');
 
 const verificarToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -9,12 +10,22 @@ const verificarToken = (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Token no proporcionado', data: null });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+  jwt.verify(token, process.env.JWT_SECRET, async (err, payload) => {
     if (err) {
       return res.status(403).json({ success: false, message: 'Token inválido o expirado', data: null });
     }
-    req.usuario = payload; // { id, rol, nombre }
-    next();
+    try {
+      // Un token emitido antes de que el usuario fuera eliminado (eliminación
+      // lógica) deja de ser válido de inmediato, sin esperar a que expire.
+      const usuario = await Usuario.findByPk(payload.id, { attributes: ['id', 'estado'] });
+      if (!usuario || usuario.estado === 'eliminado') {
+        return res.status(401).json({ success: false, message: 'La sesión ya no es válida', data: null });
+      }
+      req.usuario = payload; // { id, rol, nombre }
+      next();
+    } catch (error) {
+      next(error);
+    }
   });
 };
 

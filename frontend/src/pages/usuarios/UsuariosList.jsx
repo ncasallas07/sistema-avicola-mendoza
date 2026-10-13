@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, ShieldOff, ShieldCheck } from 'lucide-react';
+import { Plus, Pencil, ShieldOff, ShieldCheck, Trash2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import usuarioService from '../../services/usuario.service';
 import Spinner from '../../components/Spinner';
 import Badge from '../../components/Badge';
@@ -11,6 +12,8 @@ import { useConfirm } from '../../hooks/useConfirm';
 
 const UsuariosList = () => {
   const toast = useToast();
+  const { usuario: usuarioActual, tienePermiso } = useAuth();
+  const puedeEliminar = tienePermiso('usuarios.eliminar');
   const { confirmar, dialogProps } = useConfirm();
   const [usuarios, setUsuarios] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -42,6 +45,24 @@ const UsuariosList = () => {
       await usuarioService.cambiarEstado(u.id, nuevoEstado);
       toast.exito('Estado del usuario actualizado');
       cargar();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const eliminar = async (u) => {
+    const ok = await confirmar({
+      titulo: 'Eliminar usuario',
+      mensaje: `¿Eliminar a "${u.nombre}"? Dejará de aparecer en la lista y no podrá iniciar sesión, pero sus pedidos, movimientos de inventario y demás registros históricos se conservarán.`,
+      variante: 'danger',
+      textoConfirmar: 'Eliminar'
+    });
+    if (!ok) return;
+
+    try {
+      const respuesta = await usuarioService.eliminar(u.id);
+      toast.exito(respuesta.message || 'Usuario eliminado correctamente');
+      setUsuarios((actuales) => actuales.filter((x) => x.id !== u.id));
     } catch (err) {
       toast.error(err.message);
     }
@@ -94,6 +115,14 @@ const UsuariosList = () => {
                         {u.estado === 'activo' ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
                         {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
                       </button>
+                      {puedeEliminar && u.id !== usuarioActual?.id && (
+                        <button
+                          onClick={() => eliminar(u)}
+                          className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+                        >
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
