@@ -11,7 +11,7 @@ const responder = async (req, res, datos, nombreArchivo) => {
       throw error;
     }
     const filas = datos.map((d) => (d.toJSON ? d.toJSON() : d));
-    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}.csv"`);
     return res.send(aCSV(filas));
   }
