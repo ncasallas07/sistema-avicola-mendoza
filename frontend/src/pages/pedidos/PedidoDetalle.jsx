@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, PackageCheck, PackageX } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import pedidoService from '../../services/pedido.service';
@@ -36,7 +36,6 @@ const PedidoDetalle = () => {
   // inventario; solo puede hacerlo quien registra movimientos (el administrador).
   const puedeCancelarEnviado = tienePermiso('inventario.registrar_movimiento');
   const [dialogoEnviado, setDialogoEnviado] = useState(false);
-  const [reingresar, setReingresar] = useState(null);
 
   const cargar = () => {
     setCargando(true);
@@ -68,8 +67,7 @@ const PedidoDetalle = () => {
     }
   };
 
-  const cancelarEnviado = async () => {
-    if (reingresar === null) return;
+  const cancelarEnviado = async (reingresar) => {
     const ok = await ejecutarCambio('Cancelado', { reingresar_inventario: reingresar });
     if (ok) setDialogoEnviado(false);
   };
@@ -77,7 +75,6 @@ const PedidoDetalle = () => {
   const cambiarEstado = async (estado) => {
     const esCancelacion = estado === 'Cancelado';
     if (esCancelacion && pedido.estado === 'Enviado') {
-      setReingresar(null);
       setDialogoEnviado(true);
       return;
     }
@@ -121,24 +118,41 @@ const PedidoDetalle = () => {
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-slate-800">
             <h2 className="font-semibold text-slate-800 dark:text-slate-100">Cancelar pedido enviado</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Este pedido ya salió de la bodega. Indica si el producto regresa al inventario en condiciones de venderse.
+              Este pedido ya salió de la bodega. Elige qué pasa con el producto:
             </p>
-            <div className="mt-4 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
-              <label className="flex items-start gap-2">
-                <input type="radio" name="reingreso" checked={reingresar === true} onChange={() => setReingresar(true)} />
-                <span>Sí, el producto regresa en buen estado: devolver las cantidades al inventario.</span>
-              </label>
-              <label className="flex items-start gap-2">
-                <input type="radio" name="reingreso" checked={reingresar === false} onChange={() => setReingresar(false)} />
-                <span>No, el producto no vuelve al inventario: cancelar sin devolver las cantidades.</span>
-              </label>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={cambiando}
+                onClick={() => cancelarEnviado(true)}
+                className="flex items-start gap-3 rounded-lg border-2 border-emerald-500 bg-emerald-50 p-3 text-left hover:bg-emerald-100 disabled:opacity-60 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40"
+              >
+                <PackageCheck size={20} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">Devolver al inventario</span>
+                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    El producto regresó en buen estado: las cantidades vuelven a estar disponibles.
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={cambiando}
+                onClick={() => cancelarEnviado(false)}
+                className="flex items-start gap-3 rounded-lg border-2 border-red-400 bg-red-50 p-3 text-left hover:bg-red-100 disabled:opacity-60 dark:bg-red-950/40 dark:hover:bg-red-900/40"
+              >
+                <PackageX size={20} className="mt-0.5 shrink-0 text-red-600 dark:text-red-400" />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-800 dark:text-slate-100">No devolver al inventario</span>
+                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                    El producto no regresa o no está en condiciones de venderse: las cantidades no se devuelven.
+                  </span>
+                </span>
+              </button>
             </div>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-4 flex justify-end">
               <Button variant="secondary" size="sm" onClick={() => setDialogoEnviado(false)} disabled={cambiando}>
-                Volver
-              </Button>
-              <Button variant="danger" size="sm" onClick={cancelarEnviado} loading={cambiando} disabled={reingresar === null}>
-                Cancelar pedido
+                Volver sin cancelar
               </Button>
             </div>
           </div>
