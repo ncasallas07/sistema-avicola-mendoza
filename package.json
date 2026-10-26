@@ -12,7 +12,8 @@
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
-    "db:migrate:test": "cross-env NODE_ENV=test sequelize-cli db:migrate"
+    "db:migrate:test": "cross-env NODE_ENV=test sequelize-cli db:migrate",
+    "test:e2e": "playwright test"
   },
   "keywords": [],
   "author": "",
@@ -33,6 +34,7 @@
     "sequelize": "^6.37.8"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.0",
     "cross-env": "^10.1.0",
     "jest": "^30.5.1",
     "nodemon": "^3.1.14",

@@ -29,7 +29,7 @@ const noEncontrado = () => {
 const listar = async () => {
   return Usuario.findAll({
     where: { estado: { [Op.ne]: ELIMINADO } },
-    attributes: { exclude: ['password'] },
+    attributes: { exclude: ['password', 'version_sesion'] },
     include: [{ model: Rol, as: 'rol', attributes: ['id', 'nombre'] }]
   });
 };

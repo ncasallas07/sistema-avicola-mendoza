@@ -1,5 +1,6 @@
 const { Op, fn, col, literal } = require('sequelize');
 const db = require('../models');
+const { tienePermiso } = require('./autorizacion.service');
 const { Producto, Cliente, Pedido, DetallePedido } = db;
 
 // El pipeline interno tiene 6 estados (Pendiente, Confirmado, En preparación,
@@ -106,8 +107,10 @@ const dashboardVendedor = async (usuarioAutenticado, { desde, hasta } = {}) => {
   };
 };
 
+// Con dashboard.ver_global se ven los indicadores de toda la distribuidora;
+// con solo dashboard.ver, únicamente los del propio usuario.
 const obtenerDashboard = async (usuarioAutenticado, filtros) => {
-  if (usuarioAutenticado.rol === 'Admin') return dashboardAdmin(filtros);
+  if (await tienePermiso(usuarioAutenticado.rol, 'dashboard.ver_global')) return dashboardAdmin(filtros);
   return dashboardVendedor(usuarioAutenticado, filtros);
 };
 

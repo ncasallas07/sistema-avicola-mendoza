@@ -15,10 +15,11 @@ const verificarToken = (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Token inválido o expirado', data: null });
     }
     try {
-      // Un token emitido antes de que el usuario fuera eliminado (eliminación
-      // lógica) deja de ser válido de inmediato, sin esperar a que expire.
-      const usuario = await Usuario.findByPk(payload.id, { attributes: ['id', 'estado'] });
-      if (!usuario || usuario.estado === 'eliminado') {
+      // Un token deja de ser válido de inmediato, sin esperar a que expire, si el
+      // usuario fue eliminado (eliminación lógica) o si restableció su contraseña
+      // después de emitirse el token (version_sesion distinta).
+      const usuario = await Usuario.findByPk(payload.id, { attributes: ['id', 'estado', 'version_sesion'] });
+      if (!usuario || usuario.estado === 'eliminado' || (payload.ver ?? 0) !== usuario.version_sesion) {
         return res.status(401).json({ success: false, message: 'La sesión ya no es válida', data: null });
       }
       req.usuario = payload; // { id, rol, nombre }
@@ -29,8 +30,8 @@ const verificarToken = (req, res, next) => {
   });
 };
 
-// Mantenido por compatibilidad (lo sigue usando la ruta de dashboard, que no
-// corresponde a un permiso de módulo concreto). Para el resto de rutas se usa
+// Mantenido por compatibilidad; ninguna ruta lo usa desde que el dashboard pasó
+// a autorizarse por permisos (dashboard.ver). Para todas las rutas se usa
 // autorizar(), que valida contra la tabla de permisos en vez de una lista de
 // nombres de rol fija en el código.
 const verificarRol = (...rolesPermitidos) => {

@@ -23,7 +23,7 @@ import ThemeToggle from './ThemeToggle';
 // automáticamente a cualquier rol nuevo que cree un administrador, sin tocar
 // este archivo.
 const ITEMS_NAV = [
-  { to: '/', etiqueta: 'Dashboard', permiso: null, Icono: LayoutDashboard },
+  { to: '/', etiqueta: 'Dashboard', permiso: 'dashboard.ver', Icono: LayoutDashboard },
   { to: '/pedidos', etiqueta: 'Pedidos', permiso: 'pedidos.ver', Icono: ClipboardList },
   { to: '/clientes', etiqueta: 'Clientes', permiso: 'clientes.ver', Icono: Users },
   { to: '/productos', etiqueta: 'Productos', permiso: 'productos.ver', Icono: Package },

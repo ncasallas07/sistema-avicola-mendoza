@@ -10,6 +10,9 @@
 // que el entorno de pruebas reproduzca exactamente la misma matriz de
 // permisos que la base de datos real.
 const CATALOGO_PERMISOS = [
+  { codigo: 'dashboard.ver', nombre: 'Ver indicadores propios del dashboard', modulo: 'dashboard' },
+  { codigo: 'dashboard.ver_global', nombre: 'Ver indicadores generales del dashboard', modulo: 'dashboard' },
+
   { codigo: 'clientes.ver', nombre: 'Ver clientes', modulo: 'clientes' },
   { codigo: 'clientes.crear', nombre: 'Crear clientes', modulo: 'clientes' },
   { codigo: 'clientes.editar', nombre: 'Editar clientes', modulo: 'clientes' },
@@ -58,6 +61,7 @@ const CATALOGO_PERMISOS = [
 const PERMISOS_POR_ROL_EXISTENTE = {
   Admin: CATALOGO_PERMISOS.map((p) => p.codigo),
   Vendedor: [
+    'dashboard.ver',
     'clientes.ver',
     'clientes.crear',
     'clientes.editar',

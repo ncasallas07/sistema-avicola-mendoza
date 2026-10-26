@@ -76,6 +76,8 @@ const restablecerPassword = async (tokenCrudo, nuevaPassword) => {
 
   await sequelize.transaction(async (t) => {
     usuario.password = passwordHash;
+    // Invalida las sesiones abiertas con la contraseña anterior.
+    usuario.version_sesion += 1;
     await usuario.save({ transaction: t });
     registro.usado_en = new Date();
     await registro.save({ transaction: t });

@@ -24,7 +24,11 @@ import Button from '../components/Button';
 const formatoMoneda = (valor) => `$${Number(valor || 0).toLocaleString('es-CO')}`;
 
 const Dashboard = () => {
-  const { usuario, esAdmin } = useAuth();
+  const { usuario, tienePermiso } = useAuth();
+  // El dashboard se autoriza por permisos: dashboard.ver para los indicadores
+  // propios y dashboard.ver_global para los de toda la distribuidora.
+  const puedeVer = tienePermiso('dashboard.ver');
+  const esAdmin = tienePermiso('dashboard.ver_global');
   const toast = useToast();
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -44,9 +48,21 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    cargar();
+    if (puedeVer) cargar();
+    else setCargando(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!puedeVer) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Hola, {usuario?.nombre.split(' ')[0]}</h1>
+        <p className="max-w-sm text-sm text-slate-500 dark:text-slate-400">
+          Tu rol no tiene acceso a los indicadores del dashboard. Usa el menú para ir a los módulos que tienes habilitados.
+        </p>
+      </div>
+    );
+  }
 
   if (cargando) return <Spinner texto="Cargando dashboard..." />;
   if (!datos) {
