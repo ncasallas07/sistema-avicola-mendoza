@@ -12,7 +12,8 @@ const CAMPOS_EMPLEADO = {
   numero_documento: Joi.string().min(4).max(30),
   telefono: TELEFONO.allow('', null),
   direccion: Joi.string().max(255).allow('', null),
-  rh: Joi.string().valid(...RH_VALIDOS),
+  // RH, EPS y ARL pueden vaciarse al editar (p. ej., cuando el empleado se retira).
+  rh: Joi.string().valid(...RH_VALIDOS).allow('', null),
   eps: Joi.string().max(150).allow('', null),
   arl: Joi.string().max(150).allow('', null),
   cargo: Joi.string().max(100).allow('', null),

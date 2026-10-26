@@ -109,7 +109,10 @@ const UsuarioForm = () => {
       );
 
       if (esEdicion) {
-        const cambios = { nombre: form.nombre, email: form.email, ...datosEmpleado };
+        // Los datos de salud se envían aunque estén vacíos, para poder borrarlos
+        // (por ejemplo, cuando el empleado se retira de la empresa).
+        const datosSalud = { rh: form.rh, eps: form.eps, arl: form.arl };
+        const cambios = { nombre: form.nombre, email: form.email, ...datosEmpleado, ...datosSalud };
         if (puedeElegirRol) cambios.rol_id = Number(form.rol_id);
         await usuarioService.editar(id, cambios);
         toast.exito('Usuario actualizado correctamente');
@@ -202,6 +205,10 @@ const UsuarioForm = () => {
             </CampoSelect>
             <Campo label="EPS" value={form.eps} onChange={cambiar('eps')} />
             <Campo label="ARL" value={form.arl} onChange={cambiar('arl')} />
+            <p className="text-xs text-slate-500 sm:col-span-2 dark:text-slate-400">
+              RH, EPS y ARL se usan solo para atender emergencias o accidentes de trabajo. Regístrelos con la
+              autorización del empleado y bórrelos cuando se retire de la empresa.
+            </p>
 
             <Campo
               label="Fecha de nacimiento"
