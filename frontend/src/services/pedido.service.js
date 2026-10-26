@@ -6,7 +6,7 @@ const crear = async (payload) => (await api.post('/pedidos', payload)).data.data
 // Devuelve el envoltorio completo {success, message, data} para que la UI
 // pueda mostrar el mensaje específico que arma el backend por cada transición
 // (ej. "Pedido confirmado correctamente. Se descontó el inventario.").
-const cambiarEstado = async (id, estado) => (await api.patch(`/pedidos/${id}/estado`, { estado })).data;
+const cambiarEstado = async (id, estado, extra = {}) => (await api.patch(`/pedidos/${id}/estado`, { estado, ...extra })).data;
 
 // El comprobante requiere el JWT en el header Authorization, así que no puede
 // ser un <a href> directo: se descarga como blob autenticado y se abre en una

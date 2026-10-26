@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const { Op } = require('sequelize');
 const db = require('../models');
+const { tienePermiso } = require('./autorizacion.service');
 const { sequelize, Pedido, DetallePedido, Producto, Cliente, MovimientoInventario, Usuario } = db;
 
 const TRANSICIONES_VALIDAS = {
@@ -11,11 +13,13 @@ const TRANSICIONES_VALIDAS = {
   Cancelado: []
 };
 
-const generarNumeroPedido = async (t) => {
-  const ultimo = await Pedido.findOne({ order: [['id', 'DESC']], transaction: t });
-  const siguiente = (ultimo ? ultimo.id : 0) + 1;
-  return `PED-${String(siguiente).padStart(6, '0')}`;
-};
+// El número visible del pedido se deriva de su propio id, que la base de datos
+// asigna de forma única aunque lleguen varias solicitudes al mismo tiempo.
+// (Antes se calculaba como "último id + 1" y dos pedidos simultáneos podían
+// obtener el mismo número.) Los números existentes siempre son menores o
+// iguales a su id, así que el nuevo esquema no choca con ellos.
+const numeroDesdeId = (id) => `PED-${String(id).padStart(6, '0')}`;
+const numeroTemporal = () => `TMP-${crypto.randomBytes(8).toString('hex')}`;
 
 const aplicarScopeVendedor = (where, usuarioAutenticado) => {
   if (usuarioAutenticado.rol === 'Vendedor') {
@@ -68,11 +72,9 @@ const crear = async ({ cliente_id, items, observaciones }, usuarioAutenticado) =
       });
     }
 
-    const numero_pedido = await generarNumeroPedido(t);
-
     const pedido = await Pedido.create(
       {
-        numero_pedido,
+        numero_pedido: numeroTemporal(),
         cliente_id,
         usuario_id: usuarioAutenticado.id,
         estado: 'Pendiente',
@@ -82,6 +84,8 @@ const crear = async ({ cliente_id, items, observaciones }, usuarioAutenticado) =
       },
       { transaction: t }
     );
+    pedido.numero_pedido = numeroDesdeId(pedido.id);
+    await pedido.save({ transaction: t });
 
     await DetallePedido.bulkCreate(
       detalles.map((d) => ({ ...d, pedido_id: pedido.id })),
@@ -210,7 +214,9 @@ const revertirInventarioPedido = async (pedido, usuarioAutenticado, t) => {
   }
 };
 
-const cambiarEstado = async (id, nuevoEstado, usuarioAutenticado) => {
+const NOTA_SIN_REINGRESO = 'Cancelado después del envío: el producto no regresó al inventario (decisión del administrador).';
+
+const cambiarEstado = async (id, nuevoEstado, usuarioAutenticado, opciones = {}) => {
   return sequelize.transaction(async (t) => {
     const pedido = await Pedido.findByPk(id, { transaction: t, lock: t.LOCK.UPDATE });
     if (!pedido) {
@@ -236,10 +242,32 @@ const cambiarEstado = async (id, nuevoEstado, usuarioAutenticado) => {
       await descontarInventarioPedido(pedido, usuarioAutenticado, t);
     }
 
-    // Si se cancela un pedido que ya había sido confirmado (o más adelante en el
-    // flujo), su inventario ya fue descontado y debe devolverse. Si se cancela
-    // estando aún "Pendiente", nunca se tocó el inventario y no hay nada que revertir.
-    if (nuevoEstado === 'Cancelado' && estadoAnterior !== 'Pendiente') {
+    // Un pedido "Enviado" ya salió de la bodega: el producto (perecedero) puede
+    // no estar en condiciones de volver a venderse. Por eso solo un usuario que
+    // también puede registrar movimientos de inventario (por defecto, el
+    // administrador) puede cancelarlo, y debe decidir explícitamente si el
+    // producto regresa al inventario.
+    if (nuevoEstado === 'Cancelado' && estadoAnterior === 'Enviado') {
+      if (!(await tienePermiso(usuarioAutenticado.rol, 'inventario.registrar_movimiento'))) {
+        const error = new Error('Solo un administrador puede cancelar un pedido que ya fue enviado.');
+        error.status = 403;
+        throw error;
+      }
+      if (typeof opciones.reingresarInventario !== 'boolean') {
+        const error = new Error('Indica si el producto del pedido enviado regresa al inventario.');
+        error.status = 400;
+        throw error;
+      }
+      if (opciones.reingresarInventario) {
+        await revertirInventarioPedido(pedido, usuarioAutenticado, t);
+      } else {
+        const previas = pedido.observaciones ? `${pedido.observaciones} | ` : '';
+        pedido.observaciones = `${previas}${NOTA_SIN_REINGRESO}`.slice(0, 500);
+      }
+    } else if (nuevoEstado === 'Cancelado' && estadoAnterior !== 'Pendiente') {
+      // Si se cancela un pedido confirmado o en preparación, el producto sigue en
+      // la bodega: el inventario descontado se devuelve automáticamente. Si se
+      // cancela estando "Pendiente", nunca se tocó el inventario.
       await revertirInventarioPedido(pedido, usuarioAutenticado, t);
     }
 

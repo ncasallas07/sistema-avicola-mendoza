@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import pedidoService from '../../services/pedido.service';
 import Spinner from '../../components/Spinner';
 import Badge from '../../components/Badge';
@@ -30,6 +31,12 @@ const PedidoDetalle = () => {
   const [cargando, setCargando] = useState(true);
   const [cambiando, setCambiando] = useState(false);
   const [error, setError] = useState('');
+  const { tienePermiso } = useAuth();
+  // Cancelar un pedido ya enviado exige decidir si el producto regresa al
+  // inventario; solo puede hacerlo quien registra movimientos (el administrador).
+  const puedeCancelarEnviado = tienePermiso('inventario.registrar_movimiento');
+  const [dialogoEnviado, setDialogoEnviado] = useState(false);
+  const [reingresar, setReingresar] = useState(null);
 
   const cargar = () => {
     setCargando(true);
@@ -46,8 +53,34 @@ const PedidoDetalle = () => {
 
   useEffect(cargar, [id]);
 
+  const ejecutarCambio = async (estado, extra) => {
+    setCambiando(true);
+    try {
+      const respuesta = await pedidoService.cambiarEstado(id, estado, extra);
+      toast.exito(respuesta.message || 'Estado del pedido actualizado');
+      cargar();
+      return true;
+    } catch (err) {
+      toast.error(err.message);
+      return false;
+    } finally {
+      setCambiando(false);
+    }
+  };
+
+  const cancelarEnviado = async () => {
+    if (reingresar === null) return;
+    const ok = await ejecutarCambio('Cancelado', { reingresar_inventario: reingresar });
+    if (ok) setDialogoEnviado(false);
+  };
+
   const cambiarEstado = async (estado) => {
     const esCancelacion = estado === 'Cancelado';
+    if (esCancelacion && pedido.estado === 'Enviado') {
+      setReingresar(null);
+      setDialogoEnviado(true);
+      return;
+    }
     const ok = await confirmar({
       titulo: esCancelacion ? 'Cancelar pedido' : `Cambiar estado a "${estado}"`,
       mensaje: esCancelacion
@@ -59,17 +92,7 @@ const PedidoDetalle = () => {
       textoConfirmar: esCancelacion ? 'Sí, cancelar' : 'Confirmar'
     });
     if (!ok) return;
-
-    setCambiando(true);
-    try {
-      const respuesta = await pedidoService.cambiarEstado(id, estado);
-      toast.exito(respuesta.message || 'Estado del pedido actualizado');
-      cargar();
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setCambiando(false);
-    }
+    await ejecutarCambio(estado);
   };
 
   if (cargando) return <Spinner texto="Cargando pedido..." />;
@@ -84,11 +107,43 @@ const PedidoDetalle = () => {
     );
   }
 
-  const siguientesEstados = TRANSICIONES[pedido.estado] || [];
+  // Un pedido enviado solo lo puede cancelar el administrador.
+  const siguientesEstados = (TRANSICIONES[pedido.estado] || []).filter(
+    (e) => !(pedido.estado === 'Enviado' && e === 'Cancelado' && !puedeCancelarEnviado)
+  );
 
   return (
     <div className="flex flex-col gap-5">
       <ConfirmDialog {...dialogProps} cargando={cambiando} />
+
+      {dialogoEnviado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 print:hidden">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-slate-800">
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Cancelar pedido enviado</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Este pedido ya salió de la bodega. Indica si el producto regresa al inventario en condiciones de venderse.
+            </p>
+            <div className="mt-4 flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-200">
+              <label className="flex items-start gap-2">
+                <input type="radio" name="reingreso" checked={reingresar === true} onChange={() => setReingresar(true)} />
+                <span>Sí, el producto regresa en buen estado: devolver las cantidades al inventario.</span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input type="radio" name="reingreso" checked={reingresar === false} onChange={() => setReingresar(false)} />
+                <span>No, el producto no vuelve al inventario: cancelar sin devolver las cantidades.</span>
+              </label>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setDialogoEnviado(false)} disabled={cambiando}>
+                Volver
+              </Button>
+              <Button variant="danger" size="sm" onClick={cancelarEnviado} loading={cambiando} disabled={reingresar === null}>
+                Cancelar pedido
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

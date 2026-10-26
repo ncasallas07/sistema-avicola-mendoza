@@ -37,7 +37,9 @@ const cambiarEstado = async (req, res) => {
     throw error;
   }
 
-  const pedido = await pedidoService.cambiarEstado(req.params.id, req.body.estado, req.usuario);
+  const pedido = await pedidoService.cambiarEstado(req.params.id, req.body.estado, req.usuario, {
+    reingresarInventario: req.body.reingresar_inventario
+  });
   exito(res, { mensaje: MENSAJES_ESTADO[pedido.estado] || 'Estado del pedido actualizado', datos: pedido });
 };
 
