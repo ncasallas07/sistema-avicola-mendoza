@@ -46,7 +46,7 @@ describe('Pedidos: cancelación después del envío y número de pedido', () => 
 
   it('un vendedor no puede cancelar un pedido que ya fue enviado, aunque sea suyo', async () => {
     const { pedido, producto } = await pedidoEnviado(tokenVendedor);
-    const res = await estado(pedido.id, tokenVendedor, { estado: 'Cancelado', reingresar_inventario: true });
+    const res = await estado(pedido.id, tokenVendedor, { estado: 'Cancelado', reingresar_inventario: true, revision_producto: 'Regresó refrigerado y con el empaque cerrado' });
     expect(res.status).toBe(403);
     await producto.reload();
     expect(producto.cantidad_disponible).toBe(16);
@@ -60,20 +60,35 @@ describe('Pedidos: cancelación después del envío y número de pedido', () => 
     expect((await db.Pedido.findByPk(pedido.id)).estado).toBe('Enviado');
   });
 
+  it('el administrador debe dejar escrita la revisión del producto o el motivo', async () => {
+    const { pedido, producto } = await pedidoEnviado(tokenAdmin);
+    for (const revision_producto of [undefined, '', '   ', 'ok']) {
+      const res = await estado(pedido.id, tokenAdmin, { estado: 'Cancelado', reingresar_inventario: true, revision_producto });
+      expect(res.status).toBe(400);
+    }
+    await producto.reload();
+    expect(producto.cantidad_disponible).toBe(16);
+    expect((await db.Pedido.findByPk(pedido.id)).estado).toBe('Enviado');
+  });
+
   it('si el administrador decide reingresar el producto, el inventario se devuelve una vez', async () => {
     const { pedido, producto } = await pedidoEnviado(tokenAdmin);
-    const res = await estado(pedido.id, tokenAdmin, { estado: 'Cancelado', reingresar_inventario: true });
+    const res = await estado(pedido.id, tokenAdmin, { estado: 'Cancelado', reingresar_inventario: true, revision_producto: 'Regresó refrigerado y con el empaque cerrado' });
     expect(res.status).toBe(200);
     await producto.reload();
     expect(producto.cantidad_disponible).toBe(20);
     const entradas = await db.MovimientoInventario.findAll({ where: { pedido_id: pedido.id, tipo: 'Entrada' } });
     expect(entradas).toHaveLength(1);
     expect(entradas[0].motivo).toBe('Devolución por cancelación');
+    const guardado = await db.Pedido.findByPk(pedido.id);
+    expect(guardado.observaciones).toMatch(/regresó al inventario tras la revisión del administrador/);
+    expect(guardado.observaciones).toMatch(/Regresó refrigerado y con el empaque cerrado/);
+    expect(guardado.observaciones).toContain(semilla.usuarioAdmin.nombre);
   });
 
   it('si el administrador decide no reingresarlo, el inventario no cambia y queda la constancia', async () => {
     const { pedido, producto } = await pedidoEnviado(tokenAdmin);
-    const res = await estado(pedido.id, tokenAdmin, { estado: 'Cancelado', reingresar_inventario: false });
+    const res = await estado(pedido.id, tokenAdmin, { estado: 'Cancelado', reingresar_inventario: false, revision_producto: 'El cliente no devolvió el producto' });
     expect(res.status).toBe(200);
     await producto.reload();
     expect(producto.cantidad_disponible).toBe(16);
@@ -82,6 +97,7 @@ describe('Pedidos: cancelación después del envío y número de pedido', () => 
     const guardado = await db.Pedido.findByPk(pedido.id);
     expect(guardado.estado).toBe('Cancelado');
     expect(guardado.observaciones).toMatch(/no regresó al inventario/);
+    expect(guardado.observaciones).toMatch(/Motivo .*El cliente no devolvió el producto/);
   });
 
   it('cancelar un pedido confirmado (aún en bodega) sigue devolviendo el inventario automáticamente', async () => {

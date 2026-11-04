@@ -14,7 +14,9 @@ const crearPedidoSchema = Joi.object({
 const cambiarEstadoSchema = Joi.object({
   estado: Joi.string().valid('Confirmado', 'En preparación', 'Enviado', 'Entregado', 'Cancelado').required(),
   // Solo aplica al cancelar un pedido "Enviado": indica si el producto regresa al inventario.
-  reingresar_inventario: Joi.boolean()
+  reingresar_inventario: Joi.boolean(),
+  // Resultado de la revisión del producto o motivo de la decisión (obligatorio en ese caso).
+  revision_producto: Joi.string().trim().max(250).allow('')
 });
 
 module.exports = { crearPedidoSchema, cambiarEstadoSchema };

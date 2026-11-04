@@ -36,6 +36,7 @@ const PedidoDetalle = () => {
   // inventario; solo puede hacerlo quien registra movimientos (el administrador).
   const puedeCancelarEnviado = tienePermiso('inventario.registrar_movimiento');
   const [dialogoEnviado, setDialogoEnviado] = useState(false);
+  const [revision, setRevision] = useState('');
 
   const cargar = () => {
     setCargando(true);
@@ -67,9 +68,15 @@ const PedidoDetalle = () => {
     }
   };
 
+  const revisionValida = revision.trim().length >= 5;
+
   const cancelarEnviado = async (reingresar) => {
-    const ok = await ejecutarCambio('Cancelado', { reingresar_inventario: reingresar });
-    if (ok) setDialogoEnviado(false);
+    if (!revisionValida) return;
+    const ok = await ejecutarCambio('Cancelado', { reingresar_inventario: reingresar, revision_producto: revision.trim() });
+    if (ok) {
+      setDialogoEnviado(false);
+      setRevision('');
+    }
   };
 
   const cambiarEstado = async (estado) => {
@@ -118,14 +125,30 @@ const PedidoDetalle = () => {
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl dark:bg-slate-800">
             <h2 className="font-semibold text-slate-800 dark:text-slate-100">Cancelar pedido enviado</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Este pedido ya salió de la bodega. Elige qué pasa con el producto:
+              Este pedido ya salió de la bodega. Revisa el producto antes de decidir: solo debe volver al inventario si
+              regresó refrigerado, con el empaque cerrado y sin cambios de olor, color o textura.
             </p>
-            <div className="mt-4 flex flex-col gap-2">
+            <label className="mt-3 block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="revision-producto">
+              Resultado de la revisión o motivo *
+            </label>
+            <textarea
+              id="revision-producto"
+              value={revision}
+              onChange={(e) => setRevision(e.target.value)}
+              rows={3}
+              maxLength={250}
+              placeholder="Ej.: regresó a las 2 h, refrigerado y con el empaque cerrado / el cliente no lo devolvió"
+              className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Queda guardado en las observaciones del pedido con tu nombre.
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
               <button
                 type="button"
-                disabled={cambiando}
+                disabled={cambiando || !revisionValida}
                 onClick={() => cancelarEnviado(true)}
-                className="flex items-start gap-3 rounded-lg border-2 border-emerald-500 bg-emerald-50 p-3 text-left hover:bg-emerald-100 disabled:opacity-60 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40"
+                className="flex items-start gap-3 rounded-lg border-2 border-emerald-500 bg-emerald-50 p-3 text-left hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40"
               >
                 <PackageCheck size={20} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span>
@@ -137,9 +160,9 @@ const PedidoDetalle = () => {
               </button>
               <button
                 type="button"
-                disabled={cambiando}
+                disabled={cambiando || !revisionValida}
                 onClick={() => cancelarEnviado(false)}
-                className="flex items-start gap-3 rounded-lg border-2 border-red-400 bg-red-50 p-3 text-left hover:bg-red-100 disabled:opacity-60 dark:bg-red-950/40 dark:hover:bg-red-900/40"
+                className="flex items-start gap-3 rounded-lg border-2 border-red-400 bg-red-50 p-3 text-left hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-950/40 dark:hover:bg-red-900/40"
               >
                 <PackageX size={20} className="mt-0.5 shrink-0 text-red-600 dark:text-red-400" />
                 <span>
@@ -151,7 +174,7 @@ const PedidoDetalle = () => {
               </button>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button variant="secondary" size="sm" onClick={() => setDialogoEnviado(false)} disabled={cambiando}>
+              <Button variant="secondary" size="sm" onClick={() => { setDialogoEnviado(false); setRevision(''); }} disabled={cambiando}>
                 Volver sin cancelar
               </Button>
             </div>

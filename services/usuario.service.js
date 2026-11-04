@@ -189,6 +189,12 @@ const eliminar = async (id, usuarioAutenticado) => {
   }
 
   usuario.estado = ELIMINADO;
+  // Los datos de salud (RH, EPS y ARL) solo se justifican mientras la persona
+  // trabaja en la empresa: al eliminarla se borran, porque después ya no se
+  // puede editar. El resto del registro se conserva por el historial.
+  usuario.rh = null;
+  usuario.eps = null;
+  usuario.arl = null;
   await usuario.save();
   return { id: usuario.id, nombre: usuario.nombre, estado: usuario.estado };
 };

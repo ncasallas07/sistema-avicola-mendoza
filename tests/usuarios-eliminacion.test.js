@@ -16,6 +16,9 @@ describe('Usuarios: eliminación lógica', () => {
     tokenAdmin = (await login(semilla.usuarioAdmin.email, PASSWORD_PRUEBA)).token;
     tokenVendedor = (await login(semilla.usuarioVendedor1.email, PASSWORD_PRUEBA)).token;
 
+    // Datos del empleado del vendedor 2: los de salud deben borrarse al eliminarlo.
+    await semilla.usuarioVendedor2.update({ cargo: 'Vendedor', telefono: '3001234567', rh: 'O+', eps: 'EPS de prueba', arl: 'ARL de prueba' });
+
     // Historial del vendedor 2 que debe conservarse tras eliminarlo.
     const cliente = await crearCliente();
     const producto = await crearProducto(semilla.categoria.id);
@@ -62,6 +65,15 @@ describe('Usuarios: eliminación lógica', () => {
     expect(usuario).not.toBeNull();
     expect(usuario.estado).toBe('eliminado');
     expect(usuario.email).toBe(semilla.usuarioVendedor2.email);
+  });
+
+  it('al eliminarlo se borran sus datos de salud (RH, EPS y ARL) y se conservan los demás', async () => {
+    const guardado = await db.Usuario.findByPk(semilla.usuarioVendedor2.id);
+    expect(guardado.rh).toBeNull();
+    expect(guardado.eps).toBeNull();
+    expect(guardado.arl).toBeNull();
+    expect(guardado.cargo).toBe('Vendedor');
+    expect(guardado.telefono).toBe('3001234567');
   });
 
   it('sus pedidos y movimientos de inventario se conservan y siguen mostrando su nombre', async () => {

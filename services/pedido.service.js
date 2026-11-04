@@ -215,6 +215,8 @@ const revertirInventarioPedido = async (pedido, usuarioAutenticado, t) => {
 };
 
 const NOTA_SIN_REINGRESO = 'Cancelado después del envío: el producto no regresó al inventario (decisión del administrador).';
+const NOTA_CON_REINGRESO = 'Cancelado después del envío: el producto regresó al inventario tras la revisión del administrador.';
+const REVISION_MINIMA = 5;
 
 const cambiarEstado = async (id, nuevoEstado, usuarioAutenticado, opciones = {}) => {
   return sequelize.transaction(async (t) => {
@@ -258,12 +260,26 @@ const cambiarEstado = async (id, nuevoEstado, usuarioAutenticado, opciones = {})
         error.status = 400;
         throw error;
       }
+      // El administrador debe dejar escrito el resultado de la revisión del
+      // producto (estado, temperatura, empaque) o el motivo por el que no regresa,
+      // para que la decisión quede respaldada en el pedido.
+      const revision = typeof opciones.revisionProducto === 'string' ? opciones.revisionProducto.trim() : '';
+      if (revision.length < REVISION_MINIMA) {
+        const error = new Error('Describe la revisión del producto o el motivo de la decisión.');
+        error.status = 400;
+        throw error;
+      }
       if (opciones.reingresarInventario) {
         await revertirInventarioPedido(pedido, usuarioAutenticado, t);
-      } else {
-        const previas = pedido.observaciones ? `${pedido.observaciones} | ` : '';
-        pedido.observaciones = `${previas}${NOTA_SIN_REINGRESO}`.slice(0, 500);
       }
+      const nota = opciones.reingresarInventario ? NOTA_CON_REINGRESO : NOTA_SIN_REINGRESO;
+      const etiqueta = opciones.reingresarInventario ? 'Revisión' : 'Motivo';
+      // La columna admite 500 caracteres: si no caben, se recortan las
+      // observaciones previas y nunca la constancia de la cancelación.
+      const registro = `${nota} ${etiqueta} (${String(usuarioAutenticado.nombre || '').slice(0, 60)}): ${revision}`;
+      const espacio = 500 - registro.length - 3;
+      const previas = pedido.observaciones && espacio > 0 ? `${pedido.observaciones.slice(0, espacio)} | ` : '';
+      pedido.observaciones = `${previas}${registro}`;
     } else if (nuevoEstado === 'Cancelado' && estadoAnterior !== 'Pendiente') {
       // Si se cancela un pedido confirmado o en preparación, el producto sigue en
       // la bodega: el inventario descontado se devuelve automáticamente. Si se
